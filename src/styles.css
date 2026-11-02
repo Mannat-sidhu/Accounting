@@ -2963,3 +2963,357 @@ body {
 .rb-text.you {
   fill: var(--accent);
 }
+
+/* bridge chart (HTML bars) */
+.bridge-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.bridge-row {
+  display: grid;
+  grid-template-columns: minmax(0, 230px) minmax(0, 1fr) 90px;
+  gap: 12px;
+  align-items: center;
+  font-size: 13.5px;
+}
+.bridge-row .b-label {
+  color: var(--ink-2);
+}
+.bridge-row.total .b-label,
+.bridge-row.total .b-val {
+  color: var(--ink);
+  font-weight: 650;
+}
+.bridge-row .b-val {
+  text-align: right;
+}
+.b-track {
+  position: relative;
+  height: 18px;
+}
+.b-zero {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 1px;
+  background: var(--rule-strong);
+}
+.b-track .b-bar {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: 2px;
+}
+.b-track .b-bar.total {
+  background: var(--ink-3);
+}
+.b-track .b-bar.up {
+  background: var(--in);
+}
+.b-track .b-bar.down {
+  background: var(--out);
+}
+.mobile-only {
+  display: none;
+}
+
+/* ================================================================ phones */
+@media (max-width: 720px) {
+  .mobile-only {
+    display: block;
+  }
+
+  /* Inputs at 16px, so iOS doesn't zoom in when one is tapped. */
+  input,
+  select,
+  textarea,
+  .ws-input,
+  .st-select {
+    font-size: 16px !important;
+  }
+
+  /* Top bar: one slim row. Navigation moves to a bar along the bottom of the screen. */
+  .topbar-inner {
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 8px;
+    padding: 8px var(--gutter);
+  }
+  .brand {
+    min-width: 0;
+    font-size: 18px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1 1 auto;
+  }
+  .back-btn {
+    flex: none;
+    width: 36px;
+    height: 36px;
+  }
+  .metrics {
+    order: 0;
+    width: auto;
+    flex: none;
+    margin-left: auto;
+    gap: 10px;
+  }
+  .metric:not(.primary) {
+    display: none;
+  }
+  .metric.primary .label {
+    font-size: 9.5px;
+  }
+  .metric.primary .value {
+    font-size: 17px;
+  }
+  .fab-formulas {
+    flex: none;
+    padding: 4px;
+    min-height: 36px;
+  }
+  .fab-formulas {
+    font-size: 0;
+  }
+  .fab-formulas .f {
+    font-size: 16px;
+  }
+  .nav {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 40;
+    margin: 0;
+    display: flex;
+    justify-content: space-around;
+    gap: 0;
+    padding: 4px 4px calc(4px + env(safe-area-inset-bottom));
+    background: var(--paper-raised);
+    border-top: 1px solid var(--rule);
+  }
+  .nav .nav-map,
+  .nav .ledger-toggle {
+    display: inline-flex;
+  }
+  .nav button {
+    flex: 1;
+    justify-content: center;
+    min-height: 44px;
+    font-size: 13px;
+    padding: 0 4px;
+  }
+  .shell {
+    padding-bottom: calc(60px + env(safe-area-inset-bottom));
+  }
+  main.page {
+    padding-top: 14px;
+  }
+
+  /* Chat: smaller portraits so the bubbles get the width. */
+  .bubble-row .portrait {
+    width: 40px;
+    height: 40px;
+  }
+  .bubble-row .who-col > div {
+    width: 40px !important;
+  }
+  .bubble-row {
+    gap: 8px;
+  }
+  .bubble {
+    padding: 10px 13px;
+  }
+  .bubble-text {
+    font-size: 16.5px;
+    line-height: 1.45;
+  }
+  .game-title h2 {
+    font-size: 22px;
+  }
+  .ask-card {
+    font-size: 16px;
+  }
+
+  /* Choices wrap instead of squeezing into one row. */
+  .seg {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .seg .choice {
+    flex: 1 1 calc(50% - 8px);
+    min-width: 0;
+  }
+  .classify-item .seg .choice {
+    flex-basis: calc(50% - 8px);
+  }
+  .step-actions {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .step-actions .btn.ghost.small {
+    width: 100%;
+  }
+  .step-actions .btn:not(.ghost) {
+    min-height: 44px;
+  }
+
+  /* Data extracts: tighter, and they scroll sideways rather than overflow. */
+  .data-table.compact {
+    padding: 10px;
+    margin-left: calc(-1 * 4px);
+    margin-right: calc(-1 * 4px);
+  }
+  .data-table table,
+  .data-table.compact table {
+    font-size: 13px;
+  }
+  .data-table th,
+  .data-table td {
+    padding: 5px 6px;
+  }
+  .jar-row {
+    gap: 6px;
+  }
+  .jar-cell {
+    min-width: 88px;
+    padding: 6px 8px;
+  }
+  .jar-val {
+    font-size: 16px;
+  }
+
+  /* Bridge: label above its bar. */
+  .bridge-row {
+    grid-template-columns: minmax(0, 1fr) 84px;
+    row-gap: 3px;
+  }
+  .bridge-row .b-label {
+    grid-column: 1 / -1;
+  }
+  .bridge-row .b-track {
+    grid-column: 1;
+  }
+
+  /* SVG charts: bigger text in chart units, so it stays readable when the chart is scaled down. */
+  .breakeven .tick-label,
+  .breakeven .line-label {
+    font-size: 19px;
+  }
+  .range-bar .rb-text {
+    font-size: 22px;
+  }
+  .cyc-text {
+    font-size: 15px;
+  }
+
+  /* Statement builder: each line becomes a small card. */
+  .st-items thead {
+    display: none;
+  }
+  .st-items,
+  .st-items tbody {
+    display: block;
+  }
+  .st-items tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 6px 10px;
+    padding: 10px 0 12px 8px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .st-items td {
+    padding: 0;
+    border: 0;
+  }
+  .st-items td:nth-child(3),
+  .st-items td:nth-child(4) {
+    grid-column: 1 / -1;
+  }
+  .st-items tr.row-ok,
+  .st-items tr.row-bad {
+    box-shadow: inset 3px 0 0 var(--good);
+  }
+  .st-items tr.row-bad {
+    box-shadow: inset 3px 0 0 var(--bad);
+  }
+  .st-items tr td:first-child {
+    box-shadow: none !important;
+  }
+  .st-select {
+    width: 100%;
+    min-height: 44px;
+  }
+  .st-items .pills {
+    display: flex;
+    gap: 8px;
+  }
+  .st-items .pill {
+    flex: 1;
+    min-height: 40px;
+  }
+  .statement {
+    padding: 12px;
+    font-size: 13.5px;
+  }
+
+  /* Budget grid: the month columns scroll; the row labels stay put. */
+  .worksheet {
+    font-size: 13px;
+  }
+  .worksheet tbody th,
+  .worksheet thead th:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    background: var(--paper-raised);
+    min-width: 128px;
+    max-width: 150px;
+  }
+  .worksheet tr.given th {
+    background: var(--paper-raised);
+  }
+  .ws-label {
+    font-size: 14px;
+  }
+  .ws-input {
+    width: 72px;
+  }
+  .swipe-hint {
+    font-size: 12.5px;
+    color: var(--ink-3);
+    margin: 0 0 6px;
+  }
+
+  /* Judgement and exam review. */
+  .jd-situation {
+    font-size: 14px;
+  }
+  .marks-table.review {
+    font-size: 13px;
+  }
+  .marks-table.review td:first-child {
+    max-width: 120px;
+  }
+  .tier-pick .muted {
+    flex-basis: 100%;
+  }
+  .exam-clock {
+    font-size: 14px;
+    padding: 3px 8px;
+  }
+}
+@media (max-width: 720px) {
+  .model-answer {
+    padding: 10px 12px;
+    font-size: 15.5px;
+    margin-left: -4px;
+    margin-right: -4px;
+  }
+  .jd-range .range-bar {
+    margin: 4px -8px;
+    width: calc(100% + 16px);
+  }
+}

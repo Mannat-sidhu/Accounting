@@ -160,19 +160,19 @@ function RangeBar({ lo, hi, marks }: { lo: number; hi: number; marks: { label: s
   const W = 600;
   const x = (v: number) => 20 + ((v - a) / (b - a)) * (W - 40);
   return (
-    <svg viewBox={`0 0 ${W} 92`} className="range-bar" role="img" aria-label={`Defensible range ${acc(lo)} to ${acc(hi)}`}>
+    <svg viewBox={`0 0 ${W} 96`} className="range-bar" role="img" aria-label={`Defensible range ${acc(lo)} to ${acc(hi)}`}>
       <line x1={20} x2={W - 20} y1={46} y2={46} className="rb-axis" />
       <rect x={x(lo)} y={36} width={Math.max(2, x(hi) - x(lo))} height={20} rx={4} className="rb-range" />
-      <text x={x(lo)} y={78} textAnchor="middle" className="rb-text">
+      <text x={x(lo) - 4} y={80} textAnchor="end" className="rb-text">
         {acc(lo)}
       </text>
-      <text x={x(hi)} y={78} textAnchor="middle" className="rb-text">
+      <text x={x(hi) + 4} y={80} textAnchor="start" className="rb-text">
         {acc(hi)}
       </text>
       {marks.map((m, i) => (
         <g key={m.label}>
           <line x1={x(m.value)} x2={x(m.value)} y1={30} y2={62} className={`rb-mark ${m.kind}`} />
-          <text x={x(m.value)} y={i % 2 ? 24 : 14} textAnchor="middle" className={`rb-text strong ${m.kind}`}>
+          <text x={x(m.value)} y={i % 2 ? 30 : 18} textAnchor="middle" className={`rb-text strong ${m.kind}`}>
             {m.label}
           </text>
         </g>

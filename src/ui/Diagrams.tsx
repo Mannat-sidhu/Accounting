@@ -43,42 +43,37 @@ function Jar({ d }: { d: JarDiagram }) {
 }
 
 function Bridge({ d }: { d: BridgeDiagram }) {
+  // Drawn with HTML bars rather than SVG so the labels reflow on a phone instead of shrinking.
   const points = [d.start.value];
-  for (const s of d.steps) points.push(points[points.length - 1] + s.value);
+  for (const st of d.steps) points.push(points[points.length - 1] + st.value);
   const end = points[points.length - 1];
   const lo = Math.min(0, ...points);
   const hi = Math.max(0, ...points);
   const span = hi - lo || 1;
-  const W = 640;
-  const rowH = 30;
-  const labelW = 230;
-  const barW = W - labelW - 90;
-  const x = (n: number) => labelW + ((n - lo) / span) * barW;
-  const rows = [{ label: d.start.label, from: 0, to: d.start.value, kind: 'total' }, ...d.steps.map((s, i) => ({ label: s.label, from: points[i], to: points[i + 1], kind: s.value >= 0 ? 'up' : 'down' })), { label: d.end, from: 0, to: end, kind: 'total' }];
-  const H = rows.length * rowH + 12;
+  const pos = (n: number) => ((n - lo) / span) * 100;
+  const rows = [
+    { label: d.start.label, from: 0, to: d.start.value, kind: 'total' },
+    ...d.steps.map((st, i) => ({ label: st.label, from: points[i], to: points[i + 1], kind: st.value >= 0 ? 'up' : 'down' })),
+    { label: d.end, from: 0, to: end, kind: 'total' },
+  ];
   return (
-    <figure className="diagram bridge">
+    <figure className="diagram bridge" role="img" aria-label={d.title}>
       <div className="jar-title">{d.title}</div>
-      <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={d.title}>
-        <line x1={x(0)} x2={x(0)} y1={0} y2={H} className="axis" />
+      <div className="bridge-rows">
         {rows.map((r, i) => {
-          const y = i * rowH + 6;
-          const a = Math.min(x(r.from), x(r.to));
-          const w = Math.max(2, Math.abs(x(r.to) - x(r.from)));
           const delta = r.to - r.from;
           return (
-            <g key={i}>
-              <text x={0} y={y + 18} className={`b-label${r.kind === 'total' ? ' strong' : ''}`}>
-                {r.label}
-              </text>
-              <rect x={a} y={y + 4} width={w} height={rowH - 10} className={`b-bar ${r.kind}`} rx={2} />
-              <text x={W - 4} y={y + 18} textAnchor="end" className={`b-val${r.kind === 'total' ? ' strong' : ''}`}>
-                {r.kind === 'total' ? acc(r.to) : (delta >= 0 ? '+' : '') + acc(delta)}
-              </text>
-            </g>
+            <div className={`bridge-row ${r.kind}`} key={i}>
+              <span className="b-label">{r.label}</span>
+              <span className="b-track">
+                <span className="b-zero" style={{ left: `${pos(0)}%` }} />
+                <span className={`b-bar ${r.kind}`} style={{ left: `${Math.min(pos(r.from), pos(r.to))}%`, width: `${Math.max(0.8, Math.abs(pos(r.to) - pos(r.from)))}%` }} />
+              </span>
+              <span className="b-val num-tab">{r.kind === 'total' ? acc(r.to) : (delta >= 0 ? '+' : '') + acc(delta)}</span>
+            </div>
           );
         })}
-      </svg>
+      </div>
       {d.caption && <figcaption>{d.caption}</figcaption>}
     </figure>
   );

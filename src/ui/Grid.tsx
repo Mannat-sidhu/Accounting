@@ -62,6 +62,7 @@ export function GridRunner({ problem, params, seed, intro, onDone, tier = 'guide
         <p className="step-help">
           Fill the white cells in {inst.unitLabel}. Payments are positive numbers on the payments rows; a negative balance is an overdraft (type −2000 or (2000)). Each row is marked from your own rows above it, so one slip won’t sink the rest.
         </p>
+        <p className="mobile-only swipe-hint">Swipe the table sideways for more months →</p>
         <table className="worksheet">
           <thead>
             <tr>
