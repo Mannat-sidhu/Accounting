@@ -1,0 +1,365 @@
+// Chapter IV lessons: the statement of cash flows (Topic 4), built up from first principles.
+// Layout and method follow the course: indirect method from operating profit; IFRS choice for interest and dividends.
+import type { Concept } from '../engine/types';
+
+const c = (x: Omit<Concept, 'act'>): Concept => ({ act: 4, ...x });
+
+export const ACT4_CONCEPTS: Concept[] = [
+  c({
+    id: 'cash-v-profit',
+    name: 'Profit isn’t cash',
+    summary: 'Profit counts things when they’re earned or used up; cash counts them when money moves.',
+    lesson: {
+      plain: [
+        'Here’s the thing that trips everyone up. Profit and cash are two different scores for the same year.',
+        'Profit follows the accruals rule. A sale counts when it’s made, and an expense counts when it’s used up, whether or not any money has moved.',
+        'Cash counts only one thing: money actually going into or out of the bank.',
+        'So a coat sold on 60 days’ credit is profit in September and cash in November. A machine bought for cash is all cash out today, but only creeps into profit bit by bit, as depreciation.',
+        'That’s how a business can be profitable and still run out of cash. The statement of cash flows exists to explain the gap between the two.',
+      ],
+      diagram: {
+        kind: 'table',
+        title: 'One coat, three months',
+        head: ['Month', 'What happens', 'Profit', 'Cash'],
+        rows: [
+          ['August', 'Buy the wool for €400, pay cash', '0', '(400)'],
+          ['September', 'Sell the coat for €900, 60 days’ credit', '500', '0'],
+          ['November', 'The customer pays', '0', '900'],
+          ['Total', '', '500', '500'],
+        ],
+        totals: [3],
+        caption: 'Same total in the end. Different months. Profit matches the €400 cost to the sale; cash just follows the money.',
+      },
+      traps: [
+        'Sales in the income statement are not cash received. Credit sales turn into cash later, or not at all.',
+        'Depreciation lowers profit but no cash leaves. The cash went out when the machine was bought.',
+        'A loan brings in cash but isn’t profit. Repaying it takes cash but isn’t an expense.',
+      ],
+    },
+  }),
+  c({
+    id: 'cash-jar',
+    name: 'The jar rule',
+    summary: 'Start + In − Out = End. Know three, find the fourth.',
+    lesson: {
+      plain: [
+        'One trick unlocks nearly every cash flow working. Picture each balance sheet line as a jar.',
+        'What’s in the jar at the end = what was in it at the start + what went in − what came out.',
+        'Know three of those, and you can find the fourth.',
+        'Take trade receivables (money customers owe us). Credit sales go in. Cash collected comes out. So cash collected = start + sales − end.',
+        'The same jar works for inventory, payables, tax owed, dividends owed, equipment at cost and accumulated depreciation. Learn it once and you’ll use it all through this chapter.',
+      ],
+      diagram: {
+        kind: 'jar',
+        title: 'Trade receivables jar',
+        start: { label: 'Owed at start', value: 20000 },
+        ins: [{ label: 'Credit sales', value: 150000 }],
+        outs: [{ label: 'Cash collected' }],
+        end: { label: 'Owed at end', value: 35000 },
+        caption: 'Cash collected = 20,000 + 150,000 − 35,000 = 135,000. Receivables went up by 15,000, so we collected 15,000 less than we sold.',
+      },
+      formula: { tex: '\\text{Start} + \\text{In} - \\text{Out} = \\text{End}' },
+      example: {
+        prompt: 'Trade payables were €12,000 at the start and €18,000 at the end. We bought €90,000 of fabric on credit. How much did we pay suppliers?',
+        working: ['Start + In − Out = End', '12,000 + 90,000 − Out = 18,000', 'Out = 12,000 + 90,000 − 18,000 = 84,000'],
+        answer: '€84,000 paid. Payables rose €6,000: that’s cash we kept hold of.',
+      },
+      traps: [
+        'If receivables went up, you collected less cash than you sold. If payables went up, you paid out less than you bought.',
+        'Write the jar out in full on paper. The working earns marks even when the arithmetic slips.',
+      ],
+    },
+  }),
+  c({
+    id: 'cash-equivalents',
+    name: 'What counts as cash',
+    summary: 'Cash + deposits maturing within 3 months of being made − overdrafts repayable on demand.',
+    lesson: {
+      plain: [
+        'Before you build a cash flow statement, find its target: the change in cash and cash equivalents between the two balance sheets. Everything you build has to add up to that.',
+        'Cash means cash on hand and money in accounts you can get at on demand.',
+        'Cash equivalents are short-term, highly liquid deposits that turn into a known amount of cash with hardly any risk. The test is that they mature within three months of the date they were made. That’s three months from when the deposit was opened, not from the year end.',
+        'An overdraft repayable on demand is part of day-to-day cash management, so you subtract it.',
+        'And just as important, here’s what is not cash: profit, total assets, trade receivables, a one-year deposit, or shares in another company.',
+      ],
+      formula: { tex: '\\text{C\\&CE} = \\text{Cash} + \\text{deposits} \\le 3\\text{ months} - \\text{overdraft}' },
+      diagram: {
+        kind: 'table',
+        title: 'Finding the target',
+        head: ['', 'Start of year', 'End of year'],
+        rows: [
+          ['Cash at bank', '120', '95'],
+          ['Deposit (3 months from when it was made)', '100', '500'],
+          ['Bank overdraft', '(20)', '(600)'],
+          ['Cash and cash equivalents', '200', '(5)'],
+          ['Change: the target', '', '(205)'],
+        ],
+        totals: [3, 4],
+        caption: 'The statement of cash flows must explain a fall of 205. Not the profit, not the change in total assets.',
+      },
+      traps: [
+        'Don’t start from profit or from total assets. The target is the change in cash and cash equivalents, and nothing else.',
+        'A deposit opened on 16 November that matures on 15 February counts as a cash equivalent: it’s three months from the date it was made, even though it crosses the year end.',
+        'An overdraft makes cash and cash equivalents smaller, and can push them below zero.',
+      ],
+    },
+  }),
+  c({
+    id: 'ofi',
+    name: 'Three buckets: operating, investing, financing',
+    summary: 'Every cash flow goes in exactly one bucket: day-to-day trading, long-term assets, or money from owners and lenders.',
+    lesson: {
+      plain: [
+        'Every cash flow goes in one of three buckets. Exactly one: there are three and only three, and nothing goes in two.',
+        'Operating: the day-to-day business. Cash from customers, cash paid to suppliers and staff, rent, running costs.',
+        'Investing: buying and selling long-term assets and investments. A new machine, selling the old van, buying shares in a supplier, lending money to someone else.',
+        'Financing: money from and back to the people who fund the house. Issuing shares (capital and premium), taking out a loan, repaying it.',
+        'Some things aren’t cash flows at all: depreciation, a gain on a sale, a provision. Those belong in profit, and the cash flow statement has to remove them.',
+      ],
+      diagram: {
+        kind: 'table',
+        title: 'The three buckets',
+        head: ['Bucket', 'Cash in', 'Cash out'],
+        rows: [
+          ['Operating', 'Receipts from customers', 'Suppliers, wages, rent, tax'],
+          ['Investing', 'Selling equipment or investments', 'Buying equipment, intangibles, investments'],
+          ['Financing', 'Issuing shares, new loans', 'Repaying loans, buying back shares'],
+        ],
+      },
+      traps: [
+        'A machine used in operations is still investing when you buy it. The bucket is about the asset’s life, not where it sits.',
+        'Share capital and share premium from the same issue are both financing inflows.',
+        'Repaying a loan is financing. The interest on it gets a card of its own: next.',
+      ],
+    },
+  }),
+  c({
+    id: 'interest-dividends',
+    name: 'Interest, tax and dividends',
+    summary: 'IFRS lets you choose the bucket for interest and dividends. Pick one, say which, stay consistent.',
+    lesson: {
+      plain: [
+        'The international rules aren’t strict here. They let you choose, as long as you show each item separately and do it the same way every year.',
+        'Interest paid can go in operating, because it’s part of profit, or in financing, because it’s the cost of borrowing.',
+        'Interest and dividends received can go in operating, or in investing, because they’re a return on investments.',
+        'Dividends paid can go in financing, as a cost of raising equity, or in operating, to show whether trading cash can cover them.',
+        'Tax paid normally sits in operating. US rules are stricter: interest paid must be operating. So: if the question tells you where, follow it. If not, pick one, say which you’ve picked, and stay consistent.',
+      ],
+      traps: [
+        'There isn’t one right bucket for interest paid, but there are wrong answers: putting it in twice, or nowhere.',
+        'Show the tax paid in cash, not the tax charge in the income statement. A jar gets you from one to the other.',
+        'Because of this choice, “cash from operations” under IFRS isn’t perfectly comparable between companies. Check where they put interest before comparing.',
+      ],
+    },
+  }),
+  c({
+    id: 'free-cash-flow',
+    name: 'Free cash flow',
+    summary: 'Cash from operations less capital expenditure: what’s left to repay, pay out or save.',
+    lesson: {
+      plain: [
+        'Free cash flow is cash from operating activities minus what you spent on long-term assets.',
+        'It’s the cash the business throws off after keeping its equipment going: what’s free to repay lenders, pay owners, or keep for a rainy day.',
+        'Some people also take off dividends. If a question defines it, use its definition.',
+      ],
+      formula: { tex: '\\text{FCF} = \\text{CFO} - \\text{Capital expenditure}' },
+      traps: ['Capital expenditure is the cash spent on new assets, not the depreciation charge.', 'A business with positive profit can still have negative free cash flow if it’s investing heavily.'],
+    },
+  }),
+  c({
+    id: 'indirect-method',
+    name: 'The indirect method: profit to cash',
+    summary: 'Start from operating profit, add back non-cash expenses, take off non-cash gains, then adjust for working capital.',
+    lesson: {
+      plain: [
+        'We build cash from operations backwards, starting from operating profit. That’s the indirect method.',
+        'Step one: undo anything in profit that wasn’t cash. Add back depreciation and any increase in provisions. They were expenses, but no money left.',
+        'Take off a gain on selling an asset. The gain is in profit, but the real cash from the sale goes in investing. Leaving the gain in would count it twice. A loss on disposal gets added back.',
+        'Step two: adjust for working capital, meaning inventory, receivables and payables. That’s the next card.',
+        'There’s also a direct method that lists cash from customers, to suppliers and to staff. We use the indirect one.',
+      ],
+      diagram: {
+        kind: 'bridge',
+        title: 'From operating profit to operating cash',
+        start: { label: 'Operating profit', value: 30000 },
+        steps: [
+          { label: 'Add back: depreciation', value: 40000 },
+          { label: 'Deduct: gain on disposal', value: -10000 },
+          { label: 'Add back: litigation provision', value: 20000 },
+          { label: 'Deduct: increase in inventory', value: -50000 },
+          { label: 'Deduct: increase in receivables', value: -60000 },
+          { label: 'Add: increase in payables', value: 15000 },
+        ],
+        end: 'Cash from operating activities',
+        caption: 'A profit of 30,000 turned into a cash outflow of 15,000. Stock and unpaid invoices soaked up 110,000.',
+      },
+      formula: { tex: '\\text{CFO} = \\text{OP} + \\text{non-cash expenses} - \\text{non-cash gains} \\pm \\Delta\\text{working capital}' },
+      traps: [
+        'Start from operating profit (before interest), unless the question says otherwise. Starting from net profit and also deducting interest in financing counts interest twice.',
+        'A new provision is an expense with no cash yet, so you add it back.',
+      ],
+    },
+  }),
+  c({
+    id: 'working-capital',
+    name: 'Working capital: add or deduct?',
+    summary: 'An asset goes up: cash is tied up, so deduct. A liability goes up: cash is kept, so add.',
+    lesson: {
+      plain: [
+        'Cash goes round in a circle. It buys inventory, inventory is sold on credit and becomes receivables, and receivables are collected as cash again.',
+        'If inventory or receivables go up over the year, more cash is stuck in that circle. Deduct the increase.',
+        'If they go down, cash has been released. Add the decrease.',
+        'Payables and accruals work the other way round. If they go up, we’ve held on to cash we owe someone. Add the increase. If they go down, we paid out more. Deduct.',
+        'The jar shows why. Cash collected = sales − increase in receivables.',
+      ],
+      diagram: { kind: 'cycle', title: 'The circle of cash', stops: ['Cash', 'Inventory', 'Receivables'], caption: 'The more that sits in inventory and receivables, the less there is in the bank.' },
+      example: {
+        prompt: 'Inventory went from €70,000 to €120,000, receivables from €90,000 to €150,000, payables from €60,000 to €75,000.',
+        working: ['Inventory up 50,000: deduct (50,000)', 'Receivables up 60,000: deduct (60,000)', 'Payables up 15,000: add 15,000', 'Net working capital adjustment = (95,000)'],
+        answer: 'Working capital soaked up €95,000 of cash.',
+      },
+      traps: [
+        'Prepayments behave like an asset (deduct an increase); accruals like a liability (add an increase).',
+        'Tax owed and dividends owed are not adjusted here. They are paid amounts, worked out from their own jars.',
+        'A bank overdraft is not a payable. It’s part of cash and cash equivalents.',
+      ],
+    },
+  }),
+  c({
+    id: 'dep-charge',
+    name: 'Finding the depreciation charge',
+    summary: 'Closing accumulated depreciation − opening + accumulated depreciation on assets sold.',
+    lesson: {
+      plain: [
+        'Questions often hide the depreciation charge. You find it from the accumulated depreciation jar.',
+        'The jar starts with last year’s accumulated depreciation. This year’s charge goes in. When an asset is sold, its accumulated depreciation comes out. What’s left is this year’s closing figure.',
+        'So: charge = closing − opening + depreciation on the assets sold.',
+        'Forget the disposal and your charge comes out too small.',
+      ],
+      diagram: {
+        kind: 'jar',
+        title: 'Accumulated depreciation jar',
+        start: { label: 'Opening', value: 60000 },
+        ins: [{ label: 'Charge for the year' }],
+        outs: [{ label: 'On assets sold', value: 20000 }],
+        end: { label: 'Closing', value: 80000 },
+        caption: 'Charge = 80,000 − 60,000 + 20,000 = 40,000.',
+      },
+      formula: { tex: '\\text{Charge} = \\text{Closing AD} - \\text{Opening AD} + \\text{AD on disposals}' },
+      traps: ['Read the depreciation policy. Some houses charge nothing in the year an asset is bought; that changes nothing in the jar, but it explains the number.'],
+    },
+  }),
+  c({
+    id: 'capex',
+    name: 'Finding cash spent on new assets',
+    summary: 'Closing cost − opening cost + cost of assets sold = additions (an investing outflow).',
+    lesson: {
+      plain: [
+        'Same trick, different jar: equipment at cost.',
+        'Start with last year’s cost. New purchases go in. Assets sold come out at their original cost. What’s left is the closing cost.',
+        'So: additions = closing cost − opening cost + cost of assets sold. Unless the question says some were bought on credit, that’s the cash out in investing.',
+      ],
+      diagram: {
+        kind: 'jar',
+        title: 'Equipment at cost jar',
+        start: { label: 'Opening cost', value: 180000 },
+        ins: [{ label: 'Additions' }],
+        outs: [{ label: 'Cost of assets sold', value: 50000 }],
+        end: { label: 'Closing cost', value: 200000 },
+        caption: 'Additions = 200,000 − 180,000 + 50,000 = 70,000.',
+      },
+      formula: { tex: '\\text{Additions} = \\text{Closing cost} - \\text{Opening cost} + \\text{Cost of disposals}' },
+      traps: ['Use cost here, not carrying amount. Carrying amount mixes the cost jar and the depreciation jar together.'],
+    },
+  }),
+  c({
+    id: 'disposal',
+    name: 'Selling an asset: proceeds, gain or loss',
+    summary: 'Proceeds = carrying amount + gain. The proceeds go in investing; the gain comes out of operating.',
+    lesson: {
+      plain: [
+        'When an asset is sold, its carrying amount (cost − accumulated depreciation) leaves the balance sheet.',
+        'If the buyer pays more than the carrying amount, the difference is a gain on disposal, which shows up in profit. If they pay less, it’s a loss.',
+        'Proceeds = carrying amount + gain. Or, to find the gain: gain = proceeds − carrying amount.',
+        'In the cash flow statement, the whole proceeds are an investing inflow. The gain is taken back out of operating profit, so it isn’t counted twice.',
+      ],
+      formula: { tex: '\\text{Proceeds} = (\\text{Cost} - \\text{AD}) + \\text{Gain}' },
+      example: {
+        prompt: 'Equipment that cost €50,000 with €20,000 of accumulated depreciation was sold at a gain of €10,000.',
+        working: ['Carrying amount = 50,000 − 20,000 = 30,000', 'Proceeds = 30,000 + 10,000 = 40,000'],
+        answer: '€40,000 in investing; deduct the €10,000 gain in operating.',
+      },
+      traps: ['The gain is not cash. The proceeds are.', 'A loss on disposal is added back in operating, like depreciation.'],
+    },
+  }),
+  c({
+    id: 'liability-jars',
+    name: 'Tax and dividends actually paid',
+    summary: 'Paid = owed at start + charge for the year − owed at end.',
+    lesson: {
+      plain: [
+        'The income statement shows the tax charge. The statement of cash flows needs the tax paid. They’re rarely the same.',
+        'Use the liability jar. Tax owed at the start, plus this year’s charge, minus tax owed at the end, equals what was paid.',
+        'Dividends work the same way: dividends owed at the start, plus dividends declared this year, minus dividends still owed at the end.',
+        'Interest too, if there’s interest owed on the balance sheet.',
+      ],
+      diagram: {
+        kind: 'jar',
+        title: 'Tax owed jar',
+        start: { label: 'Owed at start', value: 900 },
+        ins: [{ label: 'Charge for the year', value: 170 }],
+        outs: [{ label: 'Tax paid' }],
+        end: { label: 'Owed at end', value: 240 },
+        caption: 'Paid = 900 + 170 − 240 = 830. Far more than the 170 charge: last year’s bill was paid this year.',
+      },
+      formula: { tex: '\\text{Paid} = \\text{Owed at start} + \\text{Charge} - \\text{Owed at end}' },
+      traps: ['If tax is refundable (an asset) rather than owed, the jar runs the other way round. Draw it before you write it.'],
+    },
+  }),
+  c({
+    id: 'scf-layout',
+    name: 'Putting the statement together',
+    summary: 'Operating + investing + financing = change in cash and cash equivalents. It must match the target.',
+    lesson: {
+      plain: [
+        'Here’s the order on paper. First, the target: the change in cash and cash equivalents.',
+        'Then the side workings, one jar each: depreciation, the disposal, additions, tax, dividends.',
+        'Then operating: operating profit, the non-cash adjustments, the working capital changes, and interest, tax and dividends if you’ve chosen to put them there.',
+        'Then investing, then financing. For each balance sheet line you haven’t used yet, ask what cash moved: shares issued, loans repaid, grants received.',
+        'Add the three buckets. If the total matches the target, you’re done. If not, the difference is a clue: it’s often a sign the wrong way round (look for double the difference) or a jar you forgot.',
+      ],
+      diagram: {
+        kind: 'table',
+        title: 'Statement of cash flows, worked',
+        head: ['', '€'],
+        rows: [
+          ['Cash flows from operating activities'],
+          ['Operating profit', '30,000'],
+          ['Add back depreciation', '40,000'],
+          ['Deduct gain on disposal', '(10,000)'],
+          ['Add back litigation provision', '20,000'],
+          ['Increase in inventory', '(50,000)'],
+          ['Increase in trade debtors', '(60,000)'],
+          ['Increase in trade creditors', '15,000'],
+          ['Net cash from operating activities', '(15,000)'],
+          ['Cash flows from investing activities'],
+          ['Investment in equipment', '(70,000)'],
+          ['Proceeds from disposal of equipment', '40,000'],
+          ['Net cash from investing activities', '(30,000)'],
+          ['Cash flows from financing activities'],
+          ['Issue of share capital', '40,000'],
+          ['Share premium', '80,000'],
+          ['Repayment of loans', '(40,000)'],
+          ['Interest paid', '(20,000)'],
+          ['Net cash from financing activities', '60,000'],
+          ['Net increase in cash', '15,000'],
+        ],
+        totals: [8, 12, 18, 19],
+      },
+      traps: [
+        'Every balance sheet movement has to be explained somewhere. Tick each one off as you use it.',
+        'If it doesn’t balance, halve the difference and look for an item that size with the wrong sign.',
+      ],
+    },
+  }),
+];

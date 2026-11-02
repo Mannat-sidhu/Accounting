@@ -1,0 +1,225 @@
+// Lesson pages, the ledger and the formula sheet. Reachable from anywhere.
+import { useEffect, useRef, type ReactNode } from 'react';
+import { ACTS, CONCEPTS, FORMULA_SHEET, PRACTISABLE } from '../content';
+import { LessonDiagram } from './Diagrams';
+import { conceptState, stageOf } from '../engine/mastery';
+import type { Concept, Stage } from '../engine/types';
+import { useGame } from './store';
+import { Chat } from './Chat';
+import { Tex } from './Tex';
+
+export const STAGE_LABEL: Record<Stage, string> = {
+  locked: 'Locked',
+  new: 'New',
+  practising: 'Practising',
+  common: 'Common knowledge',
+};
+
+function Overlay({ onClose, center, label, children }: { onClose: () => void; center?: boolean; label: string; children: ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const prev = document.activeElement as HTMLElement | null;
+    ref.current?.focus();
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
+    window.addEventListener('keydown', onKey);
+    document.body.style.overflow = 'hidden';
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = '';
+      prev?.focus?.();
+    };
+  }, [onClose]);
+  return (
+    <div className={`overlay${center ? ' center' : ''}`} onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="sheet" role="dialog" aria-modal="true" aria-label={label} tabIndex={-1} ref={ref}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+/** The cheat card: big idea, time ruler, formula, an example to unfold, and the traps. */
+export function LessonCard({ concept }: { concept: Concept }) {
+  const l = concept.lesson;
+  return (
+    <div className="cheat">
+      <div className="cheat-head">
+        <span className="eyebrow">Cheat card</span>
+        <h3 className="cheat-title">{concept.name}</h3>
+        <p className="cheat-idea">{concept.summary}</p>
+      </div>
+      {l.diagram && <LessonDiagram d={l.diagram} />}
+      {l.formula && (
+        <div className="formula">
+          {l.formula.onSheet && <span className="sheet-badge">on your formula sheet</span>}
+          <Tex block>{l.formula.tex}</Tex>
+          {l.formula.where && <div className="where">{l.formula.where.join(' · ')}</div>}
+        </div>
+      )}
+      {l.example && (
+        <details className="example">
+          <summary>Show me one worked through</summary>
+          <p className="prose" style={{ fontSize: 16, marginTop: 10 }}>
+            {l.example.prompt}
+          </p>
+          <div className="working">
+            {l.example.working.map((w, i) => (
+              <div className="line" key={i}>
+                <Tex>{w}</Tex>
+              </div>
+            ))}
+          </div>
+          <p>
+            <strong>Answer:</strong> {l.example.answer}
+          </p>
+        </details>
+      )}
+      <div className="traps">
+        {l.traps.map((t, i) => (
+          <div className="trap" key={i}>
+            <span className="trap-tag">Watch out</span>
+            {t}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** Full lesson for revision: Margaux's explanation, then the card. */
+export function LessonView({ concept }: { concept: Concept }) {
+  return (
+    <article className="lesson">
+      <Chat beats={concept.lesson.plain.map((text) => ({ who: 'margaux' as const, text }))} />
+      <LessonCard concept={concept} />
+    </article>
+  );
+}
+
+function LessonOverlay() {
+  const { overlays, openLesson, save, go } = useGame();
+  const c = overlays.lesson ? CONCEPTS[overlays.lesson] : null;
+  if (!c) return null;
+  const stage = stageOf(save, c.id);
+  return (
+    <Overlay onClose={() => openLesson(null)} center label={c.name}>
+      <div className="sheet-head">
+        <span className={`stage ${stage}`}>{STAGE_LABEL[stage]}</span>
+        <div className="row">
+          {PRACTISABLE.includes(c.id) && stage !== 'locked' && (
+            <button
+              type="button"
+              className="btn small"
+              onClick={() => {
+                openLesson(null);
+                go({ name: 'practice', concept: c.id });
+              }}
+            >
+              Practise
+            </button>
+          )}
+          <button type="button" className="btn ghost small" onClick={() => openLesson(null)}>
+            Close
+          </button>
+        </div>
+      </div>
+      <LessonView concept={c} />
+    </Overlay>
+  );
+}
+
+export function Ledger() {
+  const { save, openLesson } = useGame();
+  const acts = ACTS.filter((a) => a.concepts.length);
+  return (
+    <div className="ledger">
+      <h2>The ledger</h2>
+      <p className="stage-legend">Everything you’ve picked up. Tap one to brush up or practise.</p>
+      {acts.map((a) => (
+        <div className="act-group" key={a.number}>
+          <div className="eyebrow">
+            Chapter {a.numeral} · {a.title}
+          </div>
+          <ul>
+            {a.concepts.map((id) => {
+              const c = CONCEPTS[id];
+              const st = conceptState(save, id);
+              return (
+                <li key={id}>
+                  <button type="button" disabled={st.stage === 'locked'} onClick={() => openLesson(id)}>
+                    <span className="cname">{st.stage === 'locked' ? c.name : c.name}</span>
+                    <span className={`stage ${st.stage}`}>{STAGE_LABEL[st.stage]}</span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function LedgerDrawer() {
+  const { overlays, openLedger } = useGame();
+  if (!overlays.ledger) return null;
+  return (
+    <Overlay onClose={() => openLedger(false)} label="Ledger">
+      <div className="sheet-head">
+        <span />
+        <button type="button" className="btn ghost small" onClick={() => openLedger(false)}>
+          Close
+        </button>
+      </div>
+      <Ledger />
+    </Overlay>
+  );
+}
+
+function FormulaSheetOverlay() {
+  const { overlays, openFormulas } = useGame();
+  if (!overlays.formulas) return null;
+  return (
+    <Overlay onClose={() => openFormulas(false)} center label="Formula sheet">
+      <div className="sheet-head">
+        <div>
+          <h2 style={{ fontSize: 24 }}>Key ratios and formulae</h2>
+        </div>
+        <button type="button" className="btn ghost small" onClick={() => openFormulas(false)}>
+          Close
+        </button>
+      </div>
+      <p className="muted" style={{ fontSize: 13 }}>
+        The sheet you get on the day, word for word. Everything else (the jars, break-even, the cash flow layout) you carry in your head.
+      </p>
+      <div className="formula-sheet">
+        {FORMULA_SHEET.map((g) => (
+          <div key={g.group}>
+            <h3 className="eyebrow" style={{ margin: '16px 0 6px' }}>
+              {g.group}
+            </h3>
+            <ol>
+              {g.items.map((f) => (
+                <li key={f.name}>
+                  <div className="fname">{f.name}</div>
+                  <Tex>{f.tex}</Tex>
+                </li>
+              ))}
+            </ol>
+          </div>
+        ))}
+      </div>
+    </Overlay>
+  );
+}
+
+export function Overlays() {
+  return (
+    <>
+      <LedgerDrawer />
+      <FormulaSheetOverlay />
+      {/* Last, so a lesson opened from the ledger sits on top of it. */}
+      <LessonOverlay />
+    </>
+  );
+}
