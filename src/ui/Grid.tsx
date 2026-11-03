@@ -10,7 +10,7 @@ import { DataTable } from './Diagrams';
 import type { RoundResult } from './Rounds';
 import { Tex } from './Tex';
 
-export function GridRunner({ problem, params, seed, intro, onDone, tier = 'guided' }: { problem: GridProblem; params?: unknown; seed: number; intro?: ReactNode; tier?: Tier; onDone: (r: RoundResult) => void }) {
+export function GridRunner({ problem, params, seed, intro, onDone, tier = 'guided', noCall, silent }: { problem: GridProblem; params?: unknown; seed: number; intro?: ReactNode; tier?: Tier; noCall?: boolean; silent?: boolean; onDone: (r: RoundResult) => void }) {
   const inst = useMemo(() => problem.build(params ?? problem.base), [problem, params]);
   const cols = inst.columns.map((_, i) => i);
   const last = cols.length - 1;
@@ -31,8 +31,8 @@ export function GridRunner({ problem, params, seed, intro, onDone, tier = 'guide
   const rowPoints = (key: string) => (marks.result[key]?.rowOk ? (hinted[key] ? 0.5 : 1) : 0);
   const sheetScore = fillRows.reduce((s, r) => s + rowPoints(r.key), 0);
   const dec = markDecision(inst.decision, choice, why, false);
-  const max = fillRows.length + 2;
-  const total = sheetScore + (phase === 'done' ? dec.score : 0);
+  const max = fillRows.length + (noCall ? 0 : 2);
+  const total = sheetScore + (phase === 'done' && !noCall ? dec.score : 0);
 
   const finish = () => {
     const clean: Record<ConceptId, boolean> = {};
@@ -40,8 +40,29 @@ export function GridRunner({ problem, params, seed, intro, onDone, tier = 'guide
       const c = r.concept ?? problem.concept;
       clean[c] = (clean[c] ?? true) && !!marks.result[r.key]?.rowOk && !hinted[r.key];
     }
-    clean[problem.concept] = (clean[problem.concept] ?? true) && dec.correct;
-    onDone({ score: total, max, clean, outcome: choice ? inst.outcomes[choice] : undefined });
+    if (!noCall) clean[problem.concept] = (clean[problem.concept] ?? true) && dec.correct;
+    onDone({
+      score: total,
+      max,
+      clean,
+      outcome: choice ? inst.outcomes[choice] : undefined,
+      review: (
+        <table className="marks-table review">
+          <tbody>
+            {fillRows.map((r) => {
+              const res = marks.result[r.key];
+              return (
+                <tr key={r.key} className={res?.rowOk ? 'ok' : 'bad'}>
+                  <td>{r.label}</td>
+                  <td className="num-tab">{(typed[r.key] ?? []).filter((_, y) => (r.cells ?? cols).includes(y)).map((v) => v || '—').join(' · ')}</td>
+                  <td className="num-tab">{res?.rowOk ? '✓' : `✕ ${res?.expected.filter((_, y) => (r.cells ?? cols).includes(y)).map(acc).join(' · ')}`}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      ),
+    });
   };
 
   return (
@@ -127,8 +148,8 @@ export function GridRunner({ problem, params, seed, intro, onDone, tier = 'guide
               Tips halve that row’s point.
             </span>
             <span className="spacer" />
-            <button type="button" className="btn" disabled={!complete} onClick={() => setPhase('call')}>
-              Check the budget
+            <button type="button" className="btn" disabled={!complete} onClick={() => (noCall ? (silent ? finish() : setPhase('done')) : setPhase('call'))}>
+              {noCall && silent ? 'Done with this part' : 'Check the budget'}
             </button>
           </div>
         ) : (
@@ -145,7 +166,18 @@ export function GridRunner({ problem, params, seed, intro, onDone, tier = 'guide
         )}
       </div>
 
-      {checked && (
+      {checked && noCall && (
+        <div className="step-actions" style={{ marginTop: 12 }}>
+          <span className="spacer" />
+          <span className="points num-tab">
+            ✦ {total} / {max}
+          </span>
+          <button type="button" className="btn" autoFocus onClick={() => finish()}>
+            Continue →
+          </button>
+        </div>
+      )}
+      {checked && !noCall && (
         <div className="panel" style={{ marginTop: 16 }}>
           <h3 className="step-title">
             <span className="move-n">Final move</span> Make the call

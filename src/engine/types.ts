@@ -303,6 +303,8 @@ export interface BriefProblem {
   prompt: (string | StoryBeat)[];
   /** The exam-style question being answered. */
   question: string;
+  /** Most marks available, when the question asks for a set number of points ("describe four"). Defaults to the key points. */
+  cap?: number;
   cards: BriefCard[];
   /** The paragraph Margaux would write, to copy out on paper. */
   model: string;

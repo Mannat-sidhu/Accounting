@@ -417,25 +417,91 @@ const ACT_7: Act = {
   number: 7,
   numeral: 'VII',
   title: 'The Christmas crunch',
-  topic: 'Topic 9: Budgeting (no slides yet: check when they arrive)',
-  blurb: 'Plan next season month by month, and find the overdraft before it finds you.',
-  concepts: ['budget-purpose', 'receipts-timing', 'cash-budget'],
+  topic: 'Topic 7: Budgeting',
+  blurb: 'What a budget is, how the budgets fit together, the cash budget, and why people game them.',
+  concepts: ['budget-purpose', 'budget-process', 'operating-budgets', 'receipts-timing', 'cash-budget', 'budget-behaviour', 'budget-criticisms', 'budget-methods'],
   sessions: [
     {
       id: 'a7s1',
-      title: 'Month by month',
-      blurb: 'Why budget, when the money arrives, and the cash budget.',
+      title: 'The plan in numbers',
+      blurb: 'What a budget is, how they’re set, and how they fit together.',
       parts: [
-        { kind: 'story', beats: [{ who: 'aoife', text: 'Your best months for sales are your worst months for cash. Every year. Let’s plan it this time.' }] },
+        {
+          kind: 'story',
+          scene: 'Merchant’s Quay Bank · budget season',
+          beats: [
+            { who: 'aoife', text: 'Next year’s plan. In numbers. By month. I’ll be reading it.' },
+            { who: 'theo', mood: 'worried', text: 'A whole plan? In numbers? I just sell coats.' },
+            { who: 'margaux', text: 'Everyone “just” does something. The budget is how it all fits together.' },
+          ],
+        },
         { kind: 'lesson', concepts: ['budget-purpose'] },
         { kind: 'problem', problem: 'budget-benefits' },
+        { kind: 'lesson', concepts: ['budget-process'] },
+        { kind: 'problem', problem: 'budget-types-sort' },
+        { kind: 'problem', problem: 'budget-steps-sort', tier: 'unguided' },
+        { kind: 'lesson', concepts: ['operating-budgets'] },
+        { kind: 'problem', problem: 'purchases-budget' },
+        { kind: 'spotcheck' },
+      ],
+    },
+    {
+      id: 'a7s2',
+      title: 'The cash budget',
+      blurb: 'When the money arrives, and finding the overdraft before it finds you.',
+      parts: [
+        { kind: 'story', beats: [{ who: 'aoife', text: 'Your best months for sales are your worst months for cash. Every year. Let’s see it coming this time.' }] },
         { kind: 'lesson', concepts: ['receipts-timing', 'cash-budget'] },
         { kind: 'problem', problem: 'receipts-month' },
-        { kind: 'problem', problem: 'xmas-budget' },
+        { kind: 'problem', problem: 'slide-cash-budget' },
+        { kind: 'problem', problem: 'xmas-budget', tier: 'unguided' },
+        { kind: 'spotcheck' },
+      ],
+    },
+    {
+      id: 'a7s3',
+      title: 'When budgets go wrong',
+      blurb: 'Padding, bonus gaming, and better ways to budget.',
+      parts: [
+        {
+          kind: 'story',
+          beats: [
+            { who: 'theo', mood: 'happy', text: 'My studio’s budget is easy to beat. I may have mentioned we’d need a bit more silk than we really will.' },
+            { who: 'niamh', text: 'A bit more.' },
+            { who: 'margaux', text: 'That’s a story about people, not arithmetic. Let’s look at it properly.' },
+          ],
+        },
+        { kind: 'lesson', concepts: ['budget-behaviour'] },
+        { kind: 'problem', problem: 'behaviour-sort' },
+        { kind: 'problem', problem: 'budget-behaviour-brief' },
+        { kind: 'lesson', concepts: ['budget-criticisms', 'budget-methods'] },
+        { kind: 'problem', problem: 'methods-sort' },
+        { kind: 'problem', problem: 'budget-methods-brief' },
+        { kind: 'problem', problem: 'budget-criticisms-brief' },
         { kind: 'spotcheck' },
       ],
     },
   ],
+  boss: {
+    title: 'Next season’s plan',
+    intro: [
+      { who: 'aoife', text: 'Here’s the house’s next six months and a few questions. I’ll be reading your answers.' },
+      { who: 'margaux', text: 'A cash budget, a purchases budget, and a couple of written answers. No help from me.' },
+    ],
+    problems: [
+      { problem: 'receipts-month' },
+      { problem: 'purchases-budget' },
+      { problem: 'slide-cash-budget' },
+      { problem: 'xmas-budget' },
+      { problem: 'budget-benefits' },
+      { problem: 'budget-criticisms-brief' },
+    ],
+    paper: [
+      { ref: 'The six-month cash budget', note: 'Redo it on paper from the figures: total payments, surplus, opening and closing balance. Target closing balances: 30, 40, 27, 44, 57, 60.' },
+      { ref: 'Past paper Q3(B)', note: 'Four benefits of a regular budget, a sentence on how each helps.' },
+      { ref: 'Your own list', note: 'Write out the eight criticisms of traditional budgeting and pair each with one example.' },
+    ],
+  },
 };
 
 const ACT_8: Act = {

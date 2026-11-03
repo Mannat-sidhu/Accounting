@@ -13,12 +13,16 @@ export type Screen =
   | { name: 'boss'; act: number }
   | { name: 'practice'; concept: ConceptId }
   | { name: 'progress' }
+  | { name: 'notes' }
+  | { name: 'exam' }
+  | { name: 'paper'; kind: string; seed: number }
+  | { name: 'drill' }
   | { name: 'settings' };
 
 interface Overlays {
   lesson: ConceptId | null;
   formulas: boolean;
-  ledger: boolean;
+  term: string | null;
 }
 
 interface Game {
@@ -32,7 +36,8 @@ interface Game {
   overlays: Overlays;
   openLesson: (id: ConceptId | null) => void;
   openFormulas: (open: boolean) => void;
-  openLedger: (open: boolean) => void;
+  /** Open a plain-English meaning for a term (null closes it). */
+  openTerm: (term: string | null) => void;
   /** Apply a decision's consequence to value, cash and the news feed. */
   applyOutcome: (o: Outcome) => void;
   /** Record a worked problem towards mastery; returns any promotion. */
@@ -66,7 +71,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const initial = useMemo(() => store.load(), []);
   const [save, setSaveState] = useState<SaveData>(() => initial ?? freshSave());
   const [screen, setScreen] = useState<Screen>(() => (initial ? { name: 'map' } : { name: 'welcome' }));
-  const [overlays, setOverlays] = useState<Overlays>({ lesson: null, formulas: false, ledger: false });
+  const [overlays, setOverlays] = useState<Overlays>({ lesson: null, formulas: false, term: null });
   const [, setHistory] = useState<Screen[]>([]);
   const latest = useRef(save);
   latest.current = save;
@@ -94,7 +99,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
       if (cur.name !== 'welcome') setHistory((h) => [...h.slice(-20), cur]);
       return s;
     });
-    setOverlays((o) => ({ ...o, ledger: false }));
     window.scrollTo({ top: 0 });
   }, []);
 
@@ -104,7 +108,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
       setScreen(prev);
       return h.slice(0, -1);
     });
-    setOverlays((o) => ({ ...o, ledger: false }));
     window.scrollTo({ top: 0 });
   }, []);
 
@@ -147,7 +150,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     overlays,
     openLesson: (id) => setOverlays((o) => ({ ...o, lesson: id })),
     openFormulas: (open) => setOverlays((o) => ({ ...o, formulas: open })),
-    openLedger: (open) => setOverlays((o) => ({ ...o, ledger: open })),
+    openTerm: (term) => setOverlays((o) => ({ ...o, term })),
     applyOutcome,
     recordWork,
     meet,

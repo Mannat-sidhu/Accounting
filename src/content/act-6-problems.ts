@@ -27,7 +27,7 @@ const SCARVES: CvpP = { product: 'silk scarves', unit: 'scarves', price: 20, vc:
 /** The past paper's silk ties: totals for 100,000 units. */
 export const KNOTTED: CvpP = { product: 'silk ties', unit: 'ties', price: 86.6, vc: 46.6, fixed: 2440000, units: 100000, totals: true, target: 3200000, period: 'a year' };
 
-const varyCvp = (rng: () => number): CvpP => {
+export const varyCvp = (rng: () => number): CvpP => {
   const price = pickInt(rng, 20, 400, 5);
   const vc = Math.round(price * (0.35 + rng() * 0.4));
   const cpu = price - vc;
@@ -542,6 +542,7 @@ export const cvpLimitsBrief: BriefProblem = {
   concept: 'cvp-limits',
   prompt: [{ who: 'idris', text: 'Your chart says each extra scarf costs exactly the same as the last one. I’ve run a mill for thirty years. It doesn’t.' }],
   question: 'Describe two real-world factors that can distort the assumption that variable costs per unit are constant.',
+  cap: 2,
   cards: [
     { text: 'Bulk discounts: buy more silk and the supplier charges less per metre, so variable cost per unit falls at higher volumes.', kind: 'key', why: 'A classic reason the cost line bends.' },
     { text: 'Scarce resources: at high volume we pay overtime at premium rates, or pay more for scarce materials, so variable cost per unit rises.', kind: 'key', why: 'Scarcity pricing pushes the cost line up.' },

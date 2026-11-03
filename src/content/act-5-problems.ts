@@ -338,6 +338,13 @@ function jitter(rng: () => number, d: FinData): FinData {
   };
 }
 
+/** A fresh set of accounts in the house's shape, always with a profit and positive equity. */
+export function freshHouse(rng: () => number): FinData {
+  let d = jitter(rng, HOUSE);
+  for (let i = 0; i < 10 && (derive(d).op <= 2000 || derive(d).np <= 1000 || derive(d).equity <= 20000); i++) d = jitter(rng, HOUSE);
+  return d;
+}
+
 const RATIO_HOST: Record<string, 'aoife' | 'idris'> = { investor: 'idris' };
 
 function ratioProblem(id: string, concept: ConceptId, family: RatioId[], title: string, base: RatioP): CalcProblem<RatioP> {
@@ -894,6 +901,7 @@ export const debtorInfoBrief: BriefProblem = {
     { who: 'margaux', text: 'Fair. What else would you look at?' },
   ],
   question: 'Describe three useful additional sources of information to assess the merits of a debtor days figure.',
+  cap: 3,
   cards: [
     { text: 'An aged debtor listing: how much is current, 30, 60, 90+ days overdue, and who owes it.', kind: 'key', why: 'Shows whether the average hides a few very old debts or bad debts.' },
     { text: 'The credit terms the business offers, to compare against the actual days.', kind: 'key', why: '100 days against 90-day terms is very different from 100 against 30.' },

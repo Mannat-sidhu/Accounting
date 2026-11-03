@@ -5,6 +5,9 @@ import { eur, eurSigned } from '../engine/format';
 import { conceptState, intervalScale, isDue, stageOf, weakest } from '../engine/mastery';
 import { STARTING_VALUE, exportSave, freshSave, importSave } from '../engine/save';
 import type { Act, Stage } from '../engine/types';
+import { DrillPlayer } from './Drill';
+import { ExamHub, PaperPlayer } from './Exam';
+import { Notes } from './Notes';
 import { Overlays, STAGE_LABEL } from './Overlays';
 import { BossPlayer, PracticePlayer, SessionPlayer } from './Play';
 import { Portrait } from './Portrait';
@@ -27,7 +30,7 @@ function useValueToast(value: number) {
 }
 
 function TopBar() {
-  const { save, screen, go, back, canGoBack, openLedger, openFormulas } = useGame();
+  const { save, screen, go, back, canGoBack, openFormulas } = useGame();
   const toast = useValueToast(save.value);
   const value = useTicker(save.value);
   const cash = useTicker(save.cash);
@@ -77,9 +80,8 @@ function TopBar() {
         </button>
         <nav className="nav" aria-label="Main">
           {navItem('Map', { name: 'map' }, screen.name === 'map', 'nav-map')}
-          <button type="button" className="ledger-toggle" onClick={() => openLedger(true)}>
-            Ledger
-          </button>
+          {navItem('Notes', { name: 'notes' }, screen.name === 'notes')}
+          {navItem('Exam', { name: 'exam' }, screen.name === 'exam' || screen.name === 'paper')}
           {navItem('Progress', { name: 'progress' }, screen.name === 'progress')}
           {navItem('Settings', { name: 'settings' }, screen.name === 'settings')}
         </nav>
@@ -127,6 +129,35 @@ function Cast() {
   );
 }
 
+/** Three doors for the day: the drill, a mock paper, the notes. */
+function Today() {
+  const { save, go } = useGame();
+  const now = Date.now();
+  const due = ALL_CONCEPT_IDS.filter((id) => isDue(save, id, now)).length;
+  const met = ALL_CONCEPT_IDS.filter((id) => stageOf(save, id) !== 'locked').length;
+  const daysLeft = Math.ceil((new Date(save.settings.examDate + 'T09:00:00').getTime() - now) / 86_400_000);
+  const last = save.exams[0];
+  return (
+    <div className="today" aria-label="Today">
+      <button type="button" className="today-card" disabled={met === 0} onClick={() => go({ name: 'drill' })}>
+        <span className="today-tag">Today · 5 minutes</span>
+        <strong>Daily drill</strong>
+        <span>{met === 0 ? 'Unlocks after your first episode' : `Six quick questions on what needs it most${due ? ` · ${due} pop ${due === 1 ? 'quiz' : 'quizzes'} due` : ''}`}</span>
+      </button>
+      <button type="button" className="today-card" onClick={() => go({ name: 'exam' })}>
+        <span className="today-tag">{daysLeft > 0 ? `${daysLeft} days to go` : 'Exam practice'}</span>
+        <strong>Mock exam</strong>
+        <span>{last ? `Last attempt: ${Math.round((last.score / last.max) * 100)}%` : 'Sit a full paper against the clock'}</span>
+      </button>
+      <button type="button" className="today-card" onClick={() => go({ name: 'notes' })}>
+        <span className="today-tag">Look it up</span>
+        <strong>Notes</strong>
+        <span>Every idea in plain English, plus a jargon buster</span>
+      </button>
+    </div>
+  );
+}
+
 function ActMap() {
   const { save, go } = useGame();
   const resume = save.resume ? findSession(save.resume.sessionId) : null;
@@ -156,6 +187,7 @@ function ActMap() {
           </button>
         ) : null}
       </section>
+      <Today />
 
       <div className="chapters">
         {ACTS.map((act) => {
@@ -468,6 +500,10 @@ export function App() {
         {screen.name === 'boss' && <BossPlayer actNumber={screen.act} />}
         {screen.name === 'practice' && <PracticePlayer key={screen.concept} concept={screen.concept} />}
         {screen.name === 'progress' && <Progress />}
+        {screen.name === 'notes' && <Notes />}
+        {screen.name === 'exam' && <ExamHub />}
+        {screen.name === 'paper' && <PaperPlayer key={`${screen.kind}-${screen.seed}`} kind={screen.kind} seed={screen.seed} />}
+        {screen.name === 'drill' && <DrillPlayer />}
         {screen.name === 'settings' && <Settings />}
       </main>
       <Overlays />

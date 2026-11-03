@@ -966,7 +966,7 @@ export const scfFull = defineStatement<ScfP>({
 
 // ---------------------------------------------------------------- the boss: a full statement with every working (€'000)
 
-interface FrostP {
+export interface FrostP {
   op: number;
   intRec: number;
   intPaid: number;
@@ -1023,6 +1023,20 @@ export const FROST: FrostP = {
   cce: [200, -5],
 };
 
+/** Net cash flow implied by a set of accounts: the figure every correctly built statement adds up to. */
+export function frostNet(f: FrostP) {
+  const dep = A.depreciationCharge(f.adOpen, f.adClose, f.soldAd);
+  const gain = A.disposalGain(f.soldCost, f.soldAd, f.proceeds);
+  const add = A.additions(f.costOpen, f.costClose, f.soldCost);
+  const tax = A.liabilityPaid(f.taxOpen, f.taxCharge, f.taxClose);
+  const div = A.liabilityPaid(f.divOpen, f.divDeclared, f.divClose);
+  const wc = A.workingCapitalAdjustments({ inventory: f.inv, receivables: f.rec, payables: f.pay, accruals: f.accr });
+  return (
+    f.op + dep - gain + wc.inventory + wc.receivables + wc.payables + wc.accruals + f.intRec - f.intPaid - tax - div - add + f.proceeds +
+    (f.sc[1] - f.sc[0]) + (f.sp[1] - f.sp[0]) + (f.deb[1] - f.deb[0]) + (f.grant[1] - f.grant[0])
+  );
+}
+
 export const scfFrost = defineStatement<FrostP>({
   kind: 'statement',
   id: 'scf-frost',
@@ -1043,6 +1057,8 @@ export const scfFrost = defineStatement<FrostP>({
     f.rec = [FROST.rec[0], j(FROST.rec[1])];
     f.costClose = j(FROST.costClose);
     f.adClose = f.adOpen - f.soldAd + j(900);
+    // Keep the closing cash consistent with every other figure, so a correct statement always hits the target.
+    f.cce = [FROST.cce[0], FROST.cce[0] + Math.round(frostNet(f))];
     return f;
   },
   build: (f) => {
@@ -1105,7 +1121,7 @@ export const scfFrost = defineStatement<FrostP>({
       items,
       signed: true,
       totals: [
-        { key: 'net', label: 'Net change in cash and cash equivalents (€’000)', calc: (s) => s.op + s.inv + s.fin, explain: `Should match the target of ${w0(target)}${Math.abs(net - target) < 0.5 ? '' : ' (with these varied numbers the target moves too)'}.` },
+        { key: 'net', label: 'Net change in cash and cash equivalents (€’000)', calc: (s) => s.op + s.inv + s.fin, explain: `Should match the target of ${w0(target)}.` },
       ],
       decision: {
         question: 'Is the brochure’s “cash-rich” fair?',

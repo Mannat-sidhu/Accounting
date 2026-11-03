@@ -177,10 +177,11 @@ export const cleanRun = (results: Partial<Record<string, StepResult>>) =>
   Object.values(results).every((r) => !r || r.auto || (r.correct && !r.hinted));
 
 /** Brief the board: +1 per key point chosen, −1 per trap, floored at 0, out of the number of key points. */
-export function markBrief(cards: { kind: 'key' | 'trap' | 'filler' }[], chosen: number[]) {
+export function markBrief(cards: { kind: 'key' | 'trap' | 'filler' }[], chosen: number[], cap?: number) {
   const keys = cards.filter((c) => c.kind === 'key').length;
+  const max = Math.min(keys, cap ?? keys);
   const raw = chosen.reduce((s, i) => s + (cards[i].kind === 'key' ? 1 : cards[i].kind === 'trap' ? -1 : 0), 0);
-  return { score: Math.max(0, raw), max: keys, clean: raw === keys && chosen.every((i) => cards[i].kind !== 'trap') };
+  return { score: Math.min(max, Math.max(0, raw)), max, clean: raw >= max && chosen.every((i) => cards[i].kind !== 'trap') };
 }
 
 /** Table-fill: one point per correct cell. */

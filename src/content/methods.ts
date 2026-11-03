@@ -125,6 +125,10 @@ export const METHODS: Record<string, Method> = Object.fromEntries([
   // budgets
   m('receipts', 'Receipts by credit terms', '\\text{Receipts}_{m} = \\sum \\text{share} \\times \\text{Sales}_{m - \\text{lag}}'),
   m('receipts-sales', 'Receipts = this month’s sales', '\\text{Receipts}_{m} = \\text{Sales}_{m}'),
+  // budgets
+  m('purchases-budget', 'Purchases from both stock jars', '\\text{Purchases} = (\\text{Sales} + \\text{Closing FG} - \\text{Opening FG}) \\times \\text{usage} + \\text{Closing RM} - \\text{Opening RM}'),
+  m('purchases-sales-usage', 'Purchases = sales × usage', '\\text{Purchases} = \\text{Sales} \\times \\text{usage}'),
+  m('production-only', 'Purchases = production × usage', '\\text{Purchases} = \\text{Production} \\times \\text{usage}'),
   // variances
   m('sales-price-var', 'Sales Price Variance', '(\\text{Actual Price} - \\text{Budget Price}) \\times \\text{Actual Quantity}', true),
   m('sales-volume-var', 'Sales Volume Variance', '(\\text{Actual Quantity} - \\text{Budget Quantity}) \\times \\text{Budget Contribution per unit}', true),

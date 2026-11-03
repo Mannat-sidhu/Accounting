@@ -6,7 +6,7 @@ import { TIER_BLURB, TIER_LABEL, maxTier, pickSpotCheck, stageOf, tierFor } from
 import { mulberry32, newSeed, pickOne } from '../engine/rng';
 import type { ConceptId, Problem, Stage, Tier } from '../engine/types';
 import { Bubble, Scene } from './Chat';
-import { Ledger, LessonCard, STAGE_LABEL } from './Overlays';
+import { Ledger, LessonCard, STAGE_LABEL, talkBeats } from './Overlays';
 import { RoundRunner, type RoundResult } from './Rounds';
 import { Stars, starsFor } from './Stars';
 import { bumpStreak, useGame } from './store';
@@ -65,7 +65,7 @@ function Lessons({
       <section key={`${id}-talk`}>
         {label}
         <Scene
-          beats={c.lesson.plain.map((text) => ({ who: 'margaux' as const, text }))}
+          beats={talkBeats(c)}
           startAtEnd={talkFromEnd}
           onBack={prevConcept}
           onDone={() => setPhase('card')}

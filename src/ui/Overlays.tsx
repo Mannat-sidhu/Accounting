@@ -1,6 +1,9 @@
-// Lesson pages, the ledger and the formula sheet. Reachable from anywhere.
+// Lesson pages, the ledger, the formula sheet and the plain-English term cards. Reachable from anywhere.
 import { useEffect, useRef, type ReactNode } from 'react';
 import { ACTS, CONCEPTS, FORMULA_SHEET, PRACTISABLE } from '../content';
+import { entryFor } from '../content/glossary';
+import { EVERYDAY } from '../content/everyday';
+import { Jargon } from './Jargon';
 import { LessonDiagram } from './Diagrams';
 import { conceptState, stageOf } from '../engine/mastery';
 import type { Concept, Stage } from '../engine/types';
@@ -46,8 +49,15 @@ export function LessonCard({ concept }: { concept: Concept }) {
       <div className="cheat-head">
         <span className="eyebrow">Cheat card</span>
         <h3 className="cheat-title">{concept.name}</h3>
-        <p className="cheat-idea">{concept.summary}</p>
+        <p className="cheat-idea">
+          <Jargon>{concept.summary}</Jargon>
+        </p>
       </div>
+      {EVERYDAY[concept.id] && (
+        <div className="everyday">
+          <span className="everyday-tag">In real life</span> {EVERYDAY[concept.id]}
+        </div>
+      )}
       {l.diagram && <LessonDiagram d={l.diagram} />}
       {l.formula && (
         <div className="formula">
@@ -78,7 +88,7 @@ export function LessonCard({ concept }: { concept: Concept }) {
         {l.traps.map((t, i) => (
           <div className="trap" key={i}>
             <span className="trap-tag">Watch out</span>
-            {t}
+            <Jargon>{t}</Jargon>
           </div>
         ))}
       </div>
@@ -86,11 +96,14 @@ export function LessonCard({ concept }: { concept: Concept }) {
   );
 }
 
+/** What Margaux says: the everyday picture first, then the idea. */
+export const talkBeats = (c: Concept) => [...(EVERYDAY[c.id] ? [{ who: 'margaux' as const, mood: 'happy' as const, text: `Think of it like this. ${EVERYDAY[c.id]}` }] : []), ...c.lesson.plain.map((text) => ({ who: 'margaux' as const, text }))];
+
 /** Full lesson for revision: Margaux's explanation, then the card. */
 export function LessonView({ concept }: { concept: Concept }) {
   return (
     <article className="lesson">
-      <Chat beats={concept.lesson.plain.map((text) => ({ who: 'margaux' as const, text }))} />
+      <Chat beats={talkBeats(concept)} />
       <LessonCard concept={concept} />
     </article>
   );
@@ -146,7 +159,7 @@ export function Ledger() {
               const st = conceptState(save, id);
               return (
                 <li key={id}>
-                  <button type="button" disabled={st.stage === 'locked'} onClick={() => openLesson(id)}>
+                  <button type="button" onClick={() => openLesson(id)}>
                     <span className="cname">{st.stage === 'locked' ? c.name : c.name}</span>
                     <span className={`stage ${st.stage}`}>{STAGE_LABEL[st.stage]}</span>
                   </button>
@@ -160,18 +173,42 @@ export function Ledger() {
   );
 }
 
-function LedgerDrawer() {
-  const { overlays, openLedger } = useGame();
-  if (!overlays.ledger) return null;
+/** A plain-English meaning for one term, from the glossary. */
+function TermOverlay() {
+  const { overlays, openTerm, openLesson, save } = useGame();
+  const entry = overlays.term ? entryFor(overlays.term) : null;
+  if (!entry) return null;
+  const c = entry.concept ? CONCEPTS[entry.concept] : null;
+  const met = c ? stageOf(save, c.id) !== 'locked' : false;
   return (
-    <Overlay onClose={() => openLedger(false)} label="Ledger">
+    <Overlay onClose={() => openTerm(null)} center label={entry.terms[0]}>
       <div className="sheet-head">
-        <span />
-        <button type="button" className="btn ghost small" onClick={() => openLedger(false)}>
+        <span className="eyebrow">In plain English</span>
+        <button type="button" className="btn ghost small" onClick={() => openTerm(null)}>
           Close
         </button>
       </div>
-      <Ledger />
+      <h2 className="term-head">{entry.terms[0]}</h2>
+      <p className="prose">{entry.plain}</p>
+      {entry.like && (
+        <p className="everyday inline">
+          <span className="everyday-tag">Like</span> {entry.like}
+        </p>
+      )}
+      {c && (
+        <div className="row" style={{ marginTop: 14 }}>
+          <button
+            type="button"
+            className="btn small"
+            onClick={() => {
+              openTerm(null);
+              openLesson(c.id);
+            }}
+          >
+            {met ? 'Open the cheat card' : 'See the full idea'}: {c.name}
+          </button>
+        </div>
+      )}
     </Overlay>
   );
 }
@@ -216,8 +253,8 @@ function FormulaSheetOverlay() {
 export function Overlays() {
   return (
     <>
-      <LedgerDrawer />
       <FormulaSheetOverlay />
+      <TermOverlay />
       {/* Last, so a lesson opened from the ledger sits on top of it. */}
       <LessonOverlay />
     </>

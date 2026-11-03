@@ -3317,3 +3317,301 @@ body {
     width: calc(100% + 16px);
   }
 }
+
+/* ================================================================ exams, notes, plain English */
+
+textarea.written {
+  width: 100%;
+  font: inherit;
+  font-family: var(--serif);
+  font-size: 17px;
+  line-height: 1.5;
+  padding: 12px 14px;
+  border: 1px solid var(--rule-strong);
+  border-radius: 8px;
+  background: var(--paper);
+  color: var(--ink);
+  resize: vertical;
+  min-height: 180px;
+}
+textarea.written:focus {
+  outline: none;
+  border-color: var(--ink);
+  box-shadow: 0 0 0 1px var(--ink);
+}
+.selfmark {
+  margin-top: 18px;
+}
+.sm-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 9px 10px;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  margin-bottom: 6px;
+  font-size: 14.5px;
+  cursor: pointer;
+}
+.sm-row.on {
+  border-color: var(--good);
+  background: var(--good-soft);
+}
+.sm-row.trap.on {
+  border-color: var(--bad);
+  background: var(--bad-soft);
+}
+.sm-row input {
+  margin-top: 4px;
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+.sm-why {
+  display: block;
+  font-size: 12.5px;
+  color: var(--ink-3);
+  margin-top: 2px;
+}
+.paper-list {
+  display: grid;
+  gap: 14px;
+}
+.paper-card {
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 20px;
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  background: var(--paper-raised);
+}
+.paper-card h2 {
+  font-size: 22px;
+  margin: 0 0 4px;
+}
+.paper-card p {
+  margin: 0 0 4px;
+  max-width: 560px;
+}
+.rules {
+  padding-left: 20px;
+  line-height: 1.55;
+}
+.rules li + li {
+  margin-top: 8px;
+}
+.exam-stem {
+  font-family: var(--serif);
+  font-size: 17px;
+  color: var(--ink-2);
+  border-left: 3px solid var(--accent);
+  padding: 4px 0 4px 14px;
+  margin: 0 0 14px;
+}
+.part-review {
+  border-top: 1px solid var(--rule);
+  padding: 8px 0;
+}
+.part-review summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  cursor: pointer;
+  font-weight: 550;
+  list-style: none;
+}
+.part-review summary::-webkit-details-marker {
+  display: none;
+}
+.part-review.ok summary .num-tab {
+  color: var(--good);
+}
+.part-review.bad summary .num-tab {
+  color: var(--bad);
+}
+.your-answer {
+  margin: 8px 0;
+  padding: 10px 14px;
+  border-left: 3px solid var(--rule-strong);
+  color: var(--ink-2);
+  font-family: var(--serif);
+  white-space: pre-wrap;
+}
+.weak-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.weak-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+/* today strip */
+.today {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 12px;
+  margin: 0 0 26px;
+}
+.today-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  text-align: left;
+  padding: 14px 16px;
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  background: var(--paper-raised);
+  color: var(--ink);
+  cursor: pointer;
+  font: inherit;
+}
+.today-card:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+.today-card:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+.today-card strong {
+  font-family: var(--serif);
+  font-size: 20px;
+  font-weight: 500;
+}
+.today-card span:last-child {
+  font-size: 13.5px;
+  color: var(--ink-2);
+}
+.today-tag {
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+/* notes */
+.notes-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+.notes-chapter {
+  margin-bottom: 20px;
+}
+.notes-list {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  border-top: 1px solid var(--rule);
+}
+.notes-list li {
+  border-bottom: 1px solid var(--rule);
+}
+.notes-row {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  padding: 12px 2px;
+  background: none;
+  border: 0;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.notes-name {
+  font-family: var(--serif);
+  font-size: 18px;
+}
+.notes-body {
+  padding: 4px 0 18px;
+}
+.notes-list.words .notes-row {
+  flex-direction: column;
+  gap: 2px;
+}
+.words-plain {
+  font-size: 14px;
+}
+
+/* plain English */
+.jargon {
+  display: inline;
+  padding: 0;
+  margin: 0;
+  background: none;
+  border: 0;
+  border-bottom: 1px dotted var(--accent);
+  color: inherit;
+  font: inherit;
+  cursor: help;
+}
+.jargon:hover,
+.jargon:focus-visible {
+  background: var(--accent-soft);
+  outline: none;
+}
+.everyday {
+  margin: 14px 0;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--gold-soft);
+  font-size: 15.5px;
+  line-height: 1.5;
+}
+.everyday.inline {
+  margin: 10px 0 0;
+}
+.everyday-tag {
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-right: 6px;
+}
+.term-head {
+  font-size: 26px;
+  margin: 6px 0 8px;
+  text-transform: capitalize;
+}
+
+@media (max-width: 720px) {
+  .paper-card {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .paper-card .btn {
+    width: 100%;
+  }
+  .today {
+    grid-template-columns: 1fr;
+  }
+  textarea.written {
+    font-size: 16px;
+    min-height: 200px;
+  }
+  .notes-name {
+    font-size: 17px;
+  }
+}
+
+.part-review summary .num-tab {
+  white-space: nowrap;
+}
+.part-review .marks-table.review {
+  margin-top: 8px;
+}

@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { CHARACTERS } from '../content';
 import type { CharacterId, StoryBeat } from '../engine/types';
+import { Jargon } from './Jargon';
 import { CAST_COLOUR, Portrait } from './Portrait';
 
 export function Bubble({
@@ -30,7 +31,9 @@ export function Bubble({
             {c.name} <span>{c.role}</span>
           </div>
         )}
-        <div className="bubble-text">{beat.text}</div>
+        <div className="bubble-text">
+          <Jargon>{beat.text}</Jargon>
+        </div>
         {children}
       </div>
     </div>

@@ -23,7 +23,7 @@ npm run build    # static site in dist/
 | IV | Profitable, but where's the cash? | 4 Cash flow, **built from first principles** | Topic 4 slides, class example, Frozen Ltd and its worked solution |
 | V | Aoife wants ratios | 5 Financial analysis, liquidity management | Topic 5 slides, Apex, Week 5 question bank answers, past paper Q2 |
 | VI | How many scarves? | 6 CVP | Topic 6 slides, Cottage Industries, past paper Q1 |
-| VII | The Christmas crunch | 9 Budgeting | **No slides yet**: past paper Q3B and standard cash budgets |
+| VII | The Christmas crunch | 7 Budgeting | Topic 7 slides: planning cycle, benefits, setting process, types, the slides' six-month cash budget, behaviour, criticisms, ZBB/ABB/beyond budgeting |
 | VIII | Silk cost more | 10 Variances | **No slides yet**: exam formula sheet and past paper Q3A |
 | IX | More than money | 11 Non-financial info | **No slides yet**: past paper Q3C |
 | X | The sustainability report | 12 Sustainability | Placeholder: needs the slides and the Quattrone (2021) reading |
@@ -44,7 +44,20 @@ Chapter IV starts from what usually goes wrong: treating profit or total assets 
 - `src/content/act-N-{concepts,problems}.ts`, `acts.ts`: the chapters.
 - `src/content/methods.ts`: the key ratios sheet word for word (the **ƒ Formulas** button), the methods and the cast. Niamh Deasy, the auditor, is new.
 - `tests/accounting.test.ts`: solvers against the course's worked answers (class cash flow example, Frozen W1–W13, Apex 1–4, LM1–LM12, Overload, Cottage Industries, Knotted, Onesale, Example 3.8).
+- `tests/papers.test.ts`: every mock paper builds and adds to 25 a question; the cash flow clinic's statement reconciles to its target; written-answer caps; glossary and everyday coverage; the drill picker.
+- `tests/render.test.tsx`: every problem mounts at every level of help; a perfect script under exam conditions earns full marks for every calculation, statement and budget grid, with no feedback shown.
 - `tests/content.test.ts`: every problem built with 200 random parameter sets; story numbers checked against the worked answers; no course references in player-facing text.
+
+## Revising with it
+
+- **Notes** (nav): every idea, readable without playing, searchable, plus a jargon buster of 58 terms.
+- **Daily drill** (map): six quick questions on what needs it most: pop quizzes that are due, then the shakiest ideas, then what's gone longest unseen.
+- **Mock exams** (nav): the real Autumn 2025 paper (4 questions, 100 marks, 120 minutes, real numbers); a fresh paper with the same shape and new numbers each time; and a 60-minute cash flow clinic. One clock, no tips, no feedback until the end, parts can be skipped and come back at the end, pens down when time's up. Written answers are typed and marked by you against the mark scheme. The report shows your marked script for every part, marks by question, and a list of weak spots with a cheat card and practice button each. Attempts are saved.
+
+## Plain English
+
+- **In real life:** every idea has an everyday picture (`src/content/everyday.ts`), shown at the top of its cheat card and as Margaux's first line.
+- **Tap for meaning:** terms in speech bubbles and cheat cards are underlined; tapping opens a plain-English definition with an everyday example (`src/content/glossary.ts`). Switched off under exam conditions, as there's no glossary on the day.
 
 ## How the help fades
 
@@ -84,4 +97,4 @@ What sets the level:
 
 - Chapters VII–IX: check against the slides when they're added to the folder.
 - Chapter X: needs the slides and reading.
-- Chapters VII–X in timed, mixed exam style once their slides are in.
+- Chapters VIII–X (variances, non-financial information, sustainability): rebuild from the slides when they're added. Chapters VIII and IX currently rest on the exam's formula sheet and the past paper only.

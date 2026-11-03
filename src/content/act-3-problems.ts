@@ -417,6 +417,7 @@ export const discretionBrief: BriefProblem = {
     { who: 'niamh', text: 'Half joking. Show him where directors have room to move.' },
   ],
   question: 'Describe three examples of where directors can use discretion on accounting policies or estimates in a way that affects profit.',
+  cap: 3,
   cards: [
     { text: 'Depreciation: choosing useful lives, residual values and the method changes the yearly charge.', kind: 'key', why: 'A core estimate.' },
     { text: 'Provisions: how much to provide for doubtful debts, legal claims or warranties, and when to release them.', kind: 'key', why: 'Judgement on uncertain amounts.' },
@@ -439,6 +440,7 @@ export const mitigantsBrief: BriefProblem = {
   concept: 'discretion',
   prompt: [{ who: 'aoife', text: 'So directors can move profit. What stops them going too far?' }],
   question: 'Describe five measures the accounting and business communities use to reduce the impact of directors’ discretion.',
+  cap: 5,
   cards: [
     { text: 'External audit: independent auditors give an opinion on whether the accounts show a true and fair view.', kind: 'key', why: 'The main external check.' },
     { text: 'Accounting standards (IFRS) narrow the choices available and set rules for estimates and disclosures.', kind: 'key', why: 'Limits the menu.' },
@@ -534,4 +536,27 @@ export const bullBear: JudgementProblem = {
     'Profit depends on judgement. Taking the best estimate for each: provide 75% (€1.125m) against Underwater; apply the 2.5% policy to the €14m of other debts (€0.35m); return the imported parts under sale or return; shorten the life of the faulty line only (€0.4m); and reduce the litigation provision to the top of the lawyers’ range, €2m, releasing €4.5m. Reported profit: €18.125m. Bill, retiring, would push every choice upwards (no provisions, release the whole litigation provision) for about €22m. Ben would “big bath” this year by writing off everything and keeping the litigation provision, holding profit just over his €8m threshold and storing profit to release next year. Auditors, accounting standards and the consistency rule are there to keep both of them inside the defensible range.',
 };
 
-export const ACT3_PROBLEMS: Problem[] = [bullBear, isBuild, cosCalc, accrualCalc, straightLineCalc, inventoryCalc, recognitionSort, discretionSort, discretionBrief, mitigantsBrief];
+export const mitigantsOpinion: BriefProblem = {
+  kind: 'brief',
+  id: 'mitigants-opinion',
+  title: 'Is it enough?',
+  host: 'aoife',
+  concept: 'discretion',
+  prompt: [{ who: 'aoife', text: 'So: auditors, standards, governance, regulators. Do they actually protect people like me from a director who wants to flatter the profit?' }],
+  question: 'In your opinion, do these measures sufficiently protect the users of accounts from the potential for directors to manipulate profits? Give reasons.',
+  cap: 4,
+  cards: [
+    { text: 'They reduce the risk but can’t remove it: audit gives reasonable, not absolute, assurance, and works from samples.', kind: 'key', why: 'A balanced view of audit.' },
+    { text: 'Standards still leave room for judgement in estimates (lives, provisions), and judgement is where profit can be nudged.', kind: 'key', why: 'The root of the problem is estimates.' },
+    { text: 'Governance only works if the non-executives are genuinely independent and well informed.', kind: 'key', why: 'A condition on a safeguard.' },
+    { text: 'Regulators and the law mostly act after the event, so they deter more than they prevent.', kind: 'key', why: 'Timing of enforcement.' },
+    { text: 'Users can protect themselves: read the accounting policies, look for changes, and compare profit with operating cash flow.', kind: 'key', why: 'The user’s own checks.' },
+    { text: 'My conclusion is that they give significant but not complete protection, so users should still read critically.', kind: 'key', why: 'An opinion has to reach a conclusion.' },
+    { text: 'Yes, completely: the accounts are audited, so profit can’t be manipulated.', kind: 'trap', why: 'Audit isn’t a guarantee.' },
+    { text: 'No, accounts are useless because directors always lie.', kind: 'trap', why: 'Overstated: most accounts are reliable.' },
+  ],
+  model:
+    'In my opinion the measures give significant but not complete protection. Audit gives reasonable, not absolute, assurance and relies on samples and on management’s own estimates. Standards narrow the choices but still leave room for judgement over lives, provisions and write-downs, and that judgement is where profit can be nudged. Governance depends on non-executives being independent and well informed, and regulators usually act after the event. So the measures reduce the risk rather than remove it, and users should still read the accounting policies, look for changes and compare profit with operating cash flow.',
+};
+
+export const ACT3_PROBLEMS: Problem[] = [bullBear, mitigantsOpinion, isBuild, cosCalc, accrualCalc, straightLineCalc, inventoryCalc, recognitionSort, discretionSort, discretionBrief, mitigantsBrief];

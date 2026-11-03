@@ -10,6 +10,7 @@ import {
   markDecision,
   markFormula,
   markInputs,
+  playerValues,
   markSpot,
   stepsOf,
   totals,
@@ -34,6 +35,15 @@ export interface RunResult {
   decision: string;
   instance: ProblemInstance;
   results: Partial<Record<StepKey, StepResult>>;
+  /** What the player typed, for the marked script at the end of an exam. */
+  typed: Typed;
+}
+
+export interface Typed {
+  inputs: Record<string, number | null>;
+  answer: number | null;
+  decision: string | null;
+  why: string | null;
 }
 
 export const STEP_NAMES: Record<StepKey, string> = {
@@ -164,6 +174,8 @@ export function ProblemRunner({
   onDone,
   intro,
   outcomeNote,
+  noCall,
+  silent,
 }: {
   problem: CalcProblem;
   params: unknown;
@@ -173,6 +185,10 @@ export function ProblemRunner({
   intro?: ReactNode;
   /** Show the consequence for the house on the summary card. */
   outcomeNote?: boolean;
+  /** A paper only asks for the sum: leave out the "make the call" move. */
+  noCall?: boolean;
+  /** No summary at the end: hand the result straight back, to be reviewed with the whole paper. */
+  silent?: boolean;
 }) {
   const { openFormulas, openLesson } = useGame();
   const inst = useMemo(() => problem.build(params ?? problem.base), [problem, params]);
@@ -180,7 +196,7 @@ export function ProblemRunner({
     const rng = mulberry32(seed);
     return { formulas: shuffle(rng, inst.formula.options), why: shuffle(rng, inst.decision.why), spot: shuffle(rng, inst.spot?.options ?? []) };
   }, [inst, seed]);
-  const STEPS = stepsOf(inst, tier);
+  const STEPS = stepsOf(inst, tier).filter((s) => !(noCall && s === 'decision'));
   const names = { ...STEP_NAMES, ...inst.stepNames, ...(tier !== 'guided' ? { inputs: 'Your workings' } : {}) };
   const exam = tier === 'exam';
 
@@ -245,15 +261,19 @@ export function ProblemRunner({
         break;
       }
     }
-    setResults((prev) => ({ ...prev, [step]: r }));
+    const merged = { ...results, [step]: r };
+    setResults(merged);
     // Exam conditions: no feedback until the end, straight on to the next move.
-    if (exam) next();
+    if (exam) advance(merged);
     else setPhase('feedback');
   };
 
-  const next = () => {
+  const next = () => advance(results);
+
+  const advance = (res: Partial<Record<StepKey, StepResult>>) => {
     if (stepIdx === STEPS.length - 1) {
-      setPhase('summary');
+      if (silent) finish(res);
+      else setPhase('summary');
       return;
     }
     const n = stepIdx + 1;
@@ -266,9 +286,9 @@ export function ProblemRunner({
     requestAnimationFrame(() => document.getElementById('work-top')?.scrollIntoView({ block: 'start', behavior: 'smooth' }));
   };
 
-  const finish = () => {
-    const t = totals(results);
-    onDone({ clean: cleanRun(results), score: t.score, max: t.max, decision: decision!, instance: inst, results });
+  const finish = (res: Partial<Record<StepKey, StepResult>> = results) => {
+    const t = totals(res);
+    onDone({ clean: cleanRun(res), score: t.score, max: t.max, decision: decision ?? '', instance: inst, results: res, typed: { inputs: parsedInputs, answer: parseNumber(answer), decision, why } });
   };
 
   const r = results[step];
@@ -277,7 +297,7 @@ export function ProblemRunner({
 
   // ---------------------------------------------------------------- summary
   if (phase === 'summary') {
-    const outcome = inst.outcomes[decision!];
+    const outcome = decision ? inst.outcomes[decision] : undefined;
     return (
       <section className="panel" aria-labelledby="summary-title">
         <div className="spread">
@@ -319,7 +339,7 @@ export function ProblemRunner({
           </tbody>
         </table>
 
-        {exam && <ExamReview inst={inst} inputs={parsedInputs} answer={parseNumber(answer)} decision={decision} why={why} expectedAnswer={expectedAnswer} defensible={defensible} ecfOwn={ecfDetail?.own} answerOk={!!(results.answer?.correct || results.answer?.ecf)} />}
+        {exam && <ExamReview inst={inst} typed={{ inputs: parsedInputs, answer: parseNumber(answer), decision, why }} results={results} />}
         {!exam && defensible && (
           <p className="outcome" style={{ marginTop: 12 }}>
             {defensible.note}
@@ -347,7 +367,7 @@ export function ProblemRunner({
             Cheat card: {CONCEPTS[problem.concept]?.name}
           </button>
           <span className="spacer" />
-          <button type="button" className="btn" onClick={finish} autoFocus>
+          <button type="button" className="btn" onClick={() => finish()} autoFocus>
             Continue
           </button>
         </div>
@@ -606,28 +626,20 @@ export function ProblemRunner({
 }
 
 /** Exam conditions: what you put, next to what it should have been, shown only once the round is over. */
-function ExamReview({
-  inst,
-  inputs,
-  answer,
-  decision,
-  why,
-  expectedAnswer,
-  defensible,
-  ecfOwn,
-  answerOk,
-}: {
-  inst: ProblemInstance;
-  inputs: Record<string, number | null>;
-  answer: number | null;
-  decision: string | null;
-  why: string | null;
-  expectedAnswer: number;
-  defensible: Defensible | null;
-  ecfOwn?: number;
-  answerOk: boolean;
-}) {
+export function ExamReview({ inst, typed, results }: { inst: ProblemInstance; typed: Typed; results: Partial<Record<StepKey, StepResult>> }) {
   const label = (id: string | null, list: { id: string; label: string }[]) => list.find((o) => o.id === id)?.label ?? '—';
+  const expectedAnswer = inst.solve(expectedValues(inst.inputs));
+  const answerOk = !!(results.answer?.correct || results.answer?.ecf);
+  let own: number | undefined;
+  try {
+    own = inst.solve(playerValues(inst.inputs, typed.inputs));
+  } catch {
+    own = undefined;
+  }
+  const ecf = !!results.answer?.ecf && own !== undefined && Math.abs(own - expectedAnswer) > 0.01;
+  const hasCall = !!results.decision;
+  const d = hasCall ? markDecision(inst.decision, typed.decision, typed.why, false) : null;
+  const exact = typed.decision === inst.decision.correct && typed.why === inst.decision.correctWhy;
   return (
     <>
       <h3 className="eyebrow" style={{ marginTop: 22 }}>
@@ -636,11 +648,11 @@ function ExamReview({
       <table className="marks-table review">
         <tbody>
           {inst.inputs.map((s) => {
-            const ok = inputOk(s, inputs[s.key]);
+            const ok = inputOk(s, typed.inputs[s.key]);
             return (
               <tr key={s.key} className={ok ? 'ok' : 'bad'}>
                 <td>{s.label}</td>
-                <td className="num-tab">{inputs[s.key] === null ? '—' : fmt(inputs[s.key]!, s.unit)}</td>
+                <td className="num-tab">{typed.inputs[s.key] === null ? '—' : fmt(typed.inputs[s.key]!, s.unit)}</td>
                 <td className="num-tab">{ok ? '✓' : `✕ ${fmt(s.expected, s.unit)}`}</td>
               </tr>
             );
@@ -649,25 +661,21 @@ function ExamReview({
             <td>
               <strong>{inst.answer.label}</strong>
             </td>
-            <td className="num-tab">{answer === null ? '—' : fmt(answer, inst.answer.unit, 2)}</td>
-            <td className="num-tab">{answerOk ? (ecfOwn !== undefined && Math.abs(ecfOwn - expectedAnswer) > 0.01 ? '✓ from your workings' : '✓') : `✕ ${fmt(expectedAnswer, inst.answer.unit, 2)}`}</td>
+            <td className="num-tab">{typed.answer === null ? '—' : fmt(typed.answer, inst.answer.unit, 2)}</td>
+            <td className="num-tab">{answerOk ? (ecf ? '✓ from your workings' : '✓') : `✕ ${fmt(expectedAnswer, inst.answer.unit, 2)}`}</td>
           </tr>
-          <tr className={decision === inst.decision.correct && why === inst.decision.correctWhy ? 'ok' : defensible ? 'ok' : 'bad'}>
-            <td>{inst.decision.question}</td>
-            <td>
-              {label(decision, inst.decision.options)}
-              <div className="muted" style={{ fontSize: 12.5 }}>
-                {label(why, inst.decision.why)}
-              </div>
-            </td>
-            <td>
-              {decision === inst.decision.correct && why === inst.decision.correctWhy
-                ? '✓'
-                : defensible
-                  ? `Defensible: ${defensible.note}`
-                  : `✕ ${label(inst.decision.correct, inst.decision.options)}`}
-            </td>
-          </tr>
+          {hasCall && (
+            <tr className={exact || d?.defensible ? 'ok' : 'bad'}>
+              <td>{inst.decision.question}</td>
+              <td>
+                {label(typed.decision, inst.decision.options)}
+                <div className="muted" style={{ fontSize: 12.5 }}>
+                  {label(typed.why, inst.decision.why)}
+                </div>
+              </td>
+              <td>{exact ? '✓' : d?.defensible ? `Defensible: ${d.defensible.note}` : `✕ ${label(inst.decision.correct, inst.decision.options)}`}</td>
+            </tr>
+          )}
         </tbody>
       </table>
     </>

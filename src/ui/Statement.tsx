@@ -101,7 +101,7 @@ function Money({ id, label, value, onChange, state, disabled }: { id: string; la
   );
 }
 
-export function StatementRunner({ problem, params, seed, intro, onDone, outcomeNote, tier = 'guided' }: { problem: StatementProblem; params?: unknown; seed: number; intro?: ReactNode; outcomeNote?: boolean; tier?: Tier; onDone: (r: RoundResult) => void }) {
+export function StatementRunner({ problem, params, seed, intro, onDone, outcomeNote, tier = 'guided', noCall, silent }: { problem: StatementProblem; params?: unknown; seed: number; intro?: ReactNode; outcomeNote?: boolean; tier?: Tier; noCall?: boolean; silent?: boolean; onDone: (r: RoundResult) => void }) {
   const exam = tier === 'exam';
   const { openLesson } = useGame();
   const inst = useMemo(() => problem.build(params ?? problem.base), [problem, params]);
@@ -109,7 +109,8 @@ export function StatementRunner({ problem, params, seed, intro, onDone, outcomeN
     const rng = mulberry32(seed);
     return { items: shuffle(rng, inst.items), why: shuffle(rng, inst.decision.why) };
   }, [inst, seed]);
-  const moves: Move[] = inst.signed ? ['place', 'sign', 'subtotals', 'totals', 'decision'] : ['place', 'subtotals', 'totals', 'decision'];
+  const allMoves: Move[] = inst.signed ? ['place', 'sign', 'subtotals', 'totals', 'decision'] : ['place', 'subtotals', 'totals', 'decision'];
+  const moves = allMoves.filter((m) => !(noCall && m === 'decision'));
   const [idx, setIdx] = useState(0);
   const [phase, setPhase] = useState<'answer' | 'feedback' | 'summary'>('answer');
   const [placements, setPlacements] = useState<Record<string, Placement>>({});
@@ -164,15 +165,20 @@ export function StatementRunner({ problem, params, seed, intro, onDone, outcomeN
     } else if (move === 'totals') {
       r = { score: half(shareMark(totMarks.right, totMarks.of), h), max: STEP_MAX, hinted: h, correct: totMarks.right === totMarks.of };
     } else r = markDecision(inst.decision, choice, why, h);
-    setResults((x) => ({ ...x, [move]: r }));
+    const merged = { ...results, [move]: r };
+    setResults(merged);
     // Exam conditions: no reveal, no correction of the placing. Errors carry, and are marked from your own lines.
-    if (exam) next();
+    if (exam) advance(merged);
     else setPhase('feedback');
   };
 
-  const next = () => {
-    if (idx === moves.length - 1) setPhase('summary');
-    else {
+  const next = () => advance(results);
+
+  const advance = (res: Partial<Record<Move, StepResult>>) => {
+    if (idx === moves.length - 1) {
+      if (silent) finish(res);
+      else setPhase('summary');
+    } else {
       setIdx(idx + 1);
       setPhase('answer');
     }
@@ -180,7 +186,23 @@ export function StatementRunner({ problem, params, seed, intro, onDone, outcomeN
   };
 
   const tally = sumResults(results);
-  const finish = () => onDone({ score: tally.score, max: tally.max, clean: { [problem.concept]: cleanRun(results) }, outcome: choice ? inst.outcomes[choice] : undefined });
+  const finish = (res: Partial<Record<Move, StepResult>> = results) => {
+    const t = sumResults(res);
+    onDone({
+      score: t.score,
+      max: t.max,
+      clean: { [problem.concept]: cleanRun(res) },
+      outcome: choice ? inst.outcomes[choice] : undefined,
+      review: (
+        <>
+          <h4 className="eyebrow">Yours, marked line by line</h4>
+          <StatementView inst={inst} placements={placements} mark />
+          <h4 className="eyebrow">Margaux’s</h4>
+          <StatementView inst={inst} placements={truth} />
+        </>
+      ),
+    });
+  };
 
   if (phase === 'summary') {
     const outcome = choice ? inst.outcomes[choice] : undefined;
@@ -252,7 +274,7 @@ export function StatementRunner({ problem, params, seed, intro, onDone, outcomeN
             Open the cheat card
           </button>
           <span className="spacer" />
-          <button type="button" className="btn" onClick={finish} autoFocus>
+          <button type="button" className="btn" onClick={() => finish()} autoFocus>
             Continue
           </button>
         </div>

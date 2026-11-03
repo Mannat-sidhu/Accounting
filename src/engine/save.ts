@@ -23,6 +23,18 @@ export interface SessionRecord {
   max: number;
 }
 
+/** A finished mock exam: the mark, the time taken, and how each concept went. */
+export interface ExamRecord {
+  at: number;
+  paper: string;
+  title: string;
+  score: number;
+  max: number;
+  seconds: number;
+  /** Per concept: marks got and marks available. */
+  byConcept: Record<ConceptId, { got: number; of: number }>;
+}
+
 export interface NewsItem {
   at: number;
   delta: number;
@@ -53,6 +65,8 @@ export interface SaveData {
   } | null;
   mastery: Record<ConceptId, ConceptState>;
   sessionsPlayed: number;
+  /** Mock exam attempts, newest first. */
+  exams: ExamRecord[];
 }
 
 export interface SaveStore {
@@ -106,6 +120,7 @@ export function freshSave(houseName = 'Atelier Noor', now = Date.now()): SaveDat
     resume: null,
     mastery: {},
     sessionsPlayed: 0,
+    exams: [],
   };
 }
 

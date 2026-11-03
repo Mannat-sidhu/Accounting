@@ -133,6 +133,22 @@ export function pickSpotCheck(
   return learning.sort((a, b) => rank(a) - rank(b))[0];
 }
 
+/**
+ * A short mixed drill: pop quizzes that are due first, then the shakiest ideas (low clean rate, lapses), then whatever
+ * has gone longest without being seen. Only ideas already met.
+ */
+export function pickDrillSet(save: SaveData, practisable: ConceptId[], n: number, now: number): ConceptId[] {
+  const pool = practisable.filter((id) => stageOf(save, id) !== 'locked');
+  const due = pool.filter((id) => isDue(save, id, now)).sort((a, b) => (conceptState(save, a).dueAt ?? 0) - (conceptState(save, b).dueAt ?? 0));
+  const taken = new Set(due);
+  const shaky = weakest(save, pool.filter((id) => !taken.has(id)), pool.length)
+    .filter(({ c }) => c.cleanAttempts < c.attempts || c.lapses > 0 || c.stage !== 'common')
+    .map(({ id }) => id);
+  shaky.forEach((id) => taken.add(id));
+  const rest = pool.filter((id) => !taken.has(id)).sort((a, b) => (conceptState(save, a).lastSeen ?? 0) - (conceptState(save, b).lastSeen ?? 0));
+  return [...due, ...shaky, ...rest].slice(0, n);
+}
+
 /** Weakest concepts for the progress screen: most lapses and lowest clean rate first. */
 export function weakest(save: SaveData, ids: ConceptId[], n = 3) {
   return ids

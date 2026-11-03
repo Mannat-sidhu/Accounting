@@ -72,7 +72,7 @@ interface VarP {
   d: VarData;
 }
 
-const varyData = (rng: () => number): VarData => {
+export const varyData = (rng: () => number): VarData => {
   const budgetUnits = pickInt(rng, 1000, 20000, 100);
   const budgetPrice = pickInt(rng, 50, 500, 5);
   const stdQty = pickOne(rng, [1.5, 2, 2.5, 3, 4]);
