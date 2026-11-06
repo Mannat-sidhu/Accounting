@@ -3,7 +3,7 @@
 // conditions earns full marks and hands its result straight back.
 import { cleanup, fireEvent, render } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { PROBLEMS, hasParams } from '../src/content';
+import { METHODS, PROBLEMS, hasParams } from '../src/content';
 import { PAPER_KINDS } from '../src/content/papers';
 import { expectedValues, markWorksheet, sectionSums, truePlacements } from '../src/engine/grading';
 import { mulberry32 } from '../src/engine/rng';
@@ -128,4 +128,50 @@ describe('statements and budgets under paper conditions', () => {
       unmount();
     });
   }
+});
+
+describe('the figures stay on hand and are never given away', () => {
+  it('guided: figures the question states are filled in, so only the working-out is asked for', () => {
+    const p = PROBLEMS['cfo-indirect'] as CalcProblem;
+    const inst = p.build(p.base);
+    const { container, getByText, getAllByText, getByRole, getAllByRole } = mount(p, p.base, 'guided');
+    // spot, formula, then the inputs move
+    for (const id of inst.spot!.correct) fireEvent.click(getByRole('checkbox', { name: inst.spot!.options.find((o) => o.id === id)!.label }));
+    fireEvent.click(getByText('Check'));
+    fireEvent.click(getByText(/Next move/));
+    fireEvent.click(getAllByRole('radio').find((el) => el.querySelector('.name')?.firstChild?.textContent === METHODS[inst.formula.correct].name)!);
+    fireEvent.click(getByText('Check'));
+    fireEvent.click(getByText(/Next move/));
+    // the printed figures are shown, not asked for
+    expect(container.querySelector('#in-P')).toBeNull();
+    expect(container.querySelector('#in-D')).toBeNull();
+    expect(container.querySelector('#in-I')).not.toBeNull();
+    expect(container.querySelector('.marks-table.given')?.textContent).toContain('52,000');
+    // and the accounts are on hand while working
+    expect(container.querySelectorAll('.figures').length).toBe(1);
+    expect(getAllByText(/Operating profit/).length).toBeGreaterThan(1);
+  });
+
+  it('statement builder: subtotals are not printed beside the boxes that ask for them; the statement stays on screen', () => {
+    const p = PROBLEMS['is-build'] as StatementProblem;
+    const inst = p.build(p.base);
+    const { container, getByText } = mount(p, p.base, 'unguided');
+    for (const it of inst.items) fireEvent.change(container.querySelector(`select[aria-label="Section for ${it.label}"]`) as HTMLSelectElement, { target: { value: it.section } });
+    fireEvent.click(getByText('Check'));
+    fireEvent.click(getByText(/Next move/));
+    // Subtotals move: the working-out is hidden
+    const subs = [...container.querySelectorAll('.st-line.subtotal .num-tab')].map((e) => e.textContent);
+    expect(subs.length).toBeGreaterThan(0);
+    expect(subs.every((t) => t === '?')).toBe(true);
+    const truth = sectionSums(inst, truePlacements(inst));
+    for (const s of inst.sections.filter((x) => x.subtotal)) fireEvent.change(container.querySelector(`#sub-${s.id}`) as HTMLInputElement, { target: { value: String(truth[s.id]) } });
+    fireEvent.click(getByText('Check'));
+    fireEvent.click(getByText(/Next move/));
+    // Totals move: the statement is still there, with the subtotals just typed, and the bottom lines still to find
+    expect(container.querySelector('.statement')).not.toBeNull();
+    expect(container.querySelector('.st-section-label')?.textContent).toBeTruthy();
+    const shown = [...container.querySelectorAll('.st-line.subtotal .num-tab')].map((e) => e.textContent ?? '');
+    expect(shown.some((t) => t === '?')).toBe(true);
+    expect(shown.some((t) => /\d/.test(t))).toBe(true);
+  });
 });

@@ -2,8 +2,9 @@
 // and read where the marks went, with a link back to the cheat card for every weak spot.
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { ACTS, CONCEPTS, PROBLEMS } from '../content';
-import { PAPER_KINDS, totalMarks, type Paper } from '../content/papers';
+import { CHAPTER_PREFIX, PAPER_KINDS, paperKind, totalMarks, type Paper } from '../content/papers';
 import { markBrief } from '../engine/grading';
+import { TEST_OUT_PASS, testOutChapter } from '../engine/mastery';
 import { newSeed } from '../engine/rng';
 import type { BriefProblem, ConceptId } from '../engine/types';
 import { Bubble } from './Chat';
@@ -91,7 +92,8 @@ interface PartResult {
 
 export function PaperPlayer({ kind, seed }: { kind: string; seed: number }) {
   const { setSave, go, openLesson } = useGame();
-  const def = PAPER_KINDS.find((k) => k.id === kind)!;
+  const def = paperKind(kind)!;
+  const chapter = kind.startsWith(CHAPTER_PREFIX) ? ACTS[Number(kind.slice(CHAPTER_PREFIX.length)) - 1] : null;
   const paper: Paper = useMemo(() => def.build(seed), [def, seed]);
   const parts = useMemo(() => paper.questions.flatMap((q, qi) => q.parts.map((p, pi) => ({ q, qi, p, pi }))), [paper]);
   const [phase, setPhase] = useState<'intro' | 'sitting' | 'report'>('intro');
@@ -143,7 +145,7 @@ export function PaperPlayer({ kind, seed }: { kind: string; seed: number }) {
     return (
       <div className="play-main narrow">
         <header className="session-head">
-          <div className="eyebrow">Mock exam</div>
+          <div className="eyebrow">{chapter ? 'Chapter test' : 'Mock exam'}</div>
           <h1>{paper.title}</h1>
         </header>
         <section className="panel">
@@ -151,13 +153,18 @@ export function PaperPlayer({ kind, seed }: { kind: string; seed: number }) {
             <li>
               <strong>{paper.questions.length} questions</strong>, {marks(totalMarks(paper))} marks, <strong>{paper.minutes} minutes</strong>. The clock starts when you press the button and doesn’t stop.
             </li>
+            {chapter && (
+              <li>
+                <strong>Score {Math.round(TEST_OUT_PASS * 100)}% or more and Chapter {chapter.numeral} is ticked off</strong>: its episodes and boss count as done, and you move straight on. Miss it and nothing is lost; the report shows what to revisit.
+              </li>
+            )}
             <li>No tips and no feedback. Written answers you type yourself; you’ll mark them against the mark scheme at the end.</li>
             <li>You can skip any part. Skipped parts come back at the end if there’s time. Press “Done with this part” on a calculation when you’re finished with it.</li>
             <li>The sheet of key ratios and formulae is the ƒ button at the top, as on the paper. Bring your own calculator.</li>
             <li>When time’s up, it’s pens down: parts not reached score nothing.</li>
           </ul>
           <div className="step-actions">
-            <button type="button" className="btn ghost" onClick={() => go({ name: 'exam' })}>
+            <button type="button" className="btn ghost" onClick={() => go({ name: chapter ? 'map' : 'exam' })}>
               Not now
             </button>
             <span className="spacer" />
@@ -201,7 +208,7 @@ export function PaperPlayer({ kind, seed }: { kind: string; seed: number }) {
             ))}
           </div>
         </header>
-        {firstOfQ && <p className="exam-stem">{part.q.stem}</p>}
+        {firstOfQ && part.q.stem && <p className="exam-stem">{part.q.stem}</p>}
         <RoundRunner
           key={cur}
           problem={problem}
@@ -212,9 +219,7 @@ export function PaperPlayer({ kind, seed }: { kind: string; seed: number }) {
           silent
           intro={
             <div className="pop-quiz">
-              <span className="pop-tag">
-                Part {part.p.label}
-              </span>{' '}
+              <span className="pop-tag">{part.p.label ? `Part ${part.p.label}` : `Question ${part.qi + 1} of ${paper.questions.length}`}</span>{' '}
               {marks(part.p.marks)} {part.p.marks === 1 ? 'mark' : 'marks'}
             </div>
           }
@@ -258,7 +263,7 @@ export function PaperPlayer({ kind, seed }: { kind: string; seed: number }) {
 
   const byConcept: Record<ConceptId, { got: number; of: number }> = {};
   parts.forEach((x, i) => {
-    const c = PROBLEMS[x.p.problem].concept;
+    const c = x.p.concept ?? PROBLEMS[x.p.problem].concept;
     byConcept[c] = { got: (byConcept[c]?.got ?? 0) + got(i), of: (byConcept[c]?.of ?? 0) + x.p.marks };
   });
   const weak = Object.entries(byConcept)
@@ -266,17 +271,22 @@ export function PaperPlayer({ kind, seed }: { kind: string; seed: number }) {
     .filter((w) => w.pct < 0.6)
     .sort((a, b) => b.lost - a.lost);
 
+  const passed = !!chapter && total > 0 && score / total >= TEST_OUT_PASS;
+
   const saveAndLeave = () => {
     if (!saved) {
       setSaved(true);
-      setSave((s) =>
-        bumpStreak({
+      setSave((s) => {
+        let next = bumpStreak({
           ...s,
           exams: [{ at: Date.now(), paper: def.id, title: paper.title, score: Math.round(score * 10) / 10, max: total, seconds, byConcept }, ...s.exams].slice(0, 30),
-        }),
-      );
+        });
+        if (chapter && passed)
+          next = testOutChapter(next, { sessionIds: chapter.sessions.map((x) => x.id), boss: chapter.boss ? chapter.number : null, concepts: chapter.concepts }, byConcept, Date.now());
+        return next;
+      });
     }
-    go({ name: 'exam' });
+    go({ name: chapter ? 'map' : 'exam' });
   };
 
   const tick = (i: number, ticks: number[]) => setResults((r) => ({ ...r, [i]: { ...r[i], ticks } }));
@@ -302,6 +312,10 @@ export function PaperPlayer({ kind, seed }: { kind: string; seed: number }) {
             text:
               written.length && !written.every(({ i }) => results[i].ticks.length)
                 ? 'That’s the calculations marked. Now mark your written answers below, honestly: they’re worth a lot of this paper.'
+                : chapter
+                  ? passed
+                    ? `That’s ${pct}%. You know this chapter, so I’ll tick it off and we move on. Anything shaky is listed below.`
+                    : `${pct}% today, and ${Math.round(TEST_OUT_PASS * 100)}% ticks the chapter off. Nothing lost: the list below is exactly what to revisit, then try again.`
                 : pct >= 70
                   ? 'A strong paper. Read the weak spots below and close them.'
                   : pct >= 50
@@ -331,7 +345,8 @@ export function PaperPlayer({ kind, seed }: { kind: string; seed: number }) {
                 <details className={`part-review${fraction(i) >= 0.8 ? ' ok' : fraction(i) < 0.5 ? ' bad' : ''}`} key={i} open={isWritten}>
                   <summary>
                     <span>
-                      {x.p.label} · {CONCEPTS[prob.concept].name}
+                      {x.p.label ? `${x.p.label} · ` : ''}
+                      {CONCEPTS[x.p.concept ?? prob.concept].name}
                       {r.notReached && <span className="tagline">not reached</span>}
                     </span>
                     <span className="num-tab">
@@ -361,7 +376,7 @@ export function PaperPlayer({ kind, seed }: { kind: string; seed: number }) {
 
       <h2 className="section-title">Where the marks went</h2>
       {weak.length === 0 ? (
-        <p className="muted">Nothing below 60%. Sit a fresh paper next.</p>
+        <p className="muted">{chapter ? 'Nothing below 60%. Nothing to revisit here.' : 'Nothing below 60%. Sit a fresh paper next.'}</p>
       ) : (
         <ul className="weak-list">
           {weak.map((w) => (
@@ -390,7 +405,7 @@ export function PaperPlayer({ kind, seed }: { kind: string; seed: number }) {
         <span />
         <span />
         <button type="button" className="btn" onClick={saveAndLeave}>
-          Save this attempt →
+          {chapter ? (passed ? `Tick off Chapter ${chapter.numeral} and move on →` : 'Back to the map →') : 'Save this attempt →'}
         </button>
       </div>
     </div>

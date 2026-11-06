@@ -1,8 +1,8 @@
 // Mock exam papers. A paper is a set of questions, each worth 25 marks, built from the same problems as the chapters
 // and played under exam conditions: no tips, no feedback until the end, one clock for the whole paper.
 import { mulberry32 } from '../engine/rng';
-import type { CalcProblem, StatementProblem } from '../engine/types';
-import { PROBLEMS } from './index';
+import type { Act, CalcProblem, ConceptId, Problem, StatementProblem } from '../engine/types';
+import { ACTS, CONCEPTS, PROBLEMS, hasParams, problemsFor } from './index';
 import type { FrostP } from './act-4-problems';
 import { OVERLOAD, freshHouse, type FinData } from './act-5-problems';
 import { KNOTTED, varyCvp } from './act-6-problems';
@@ -14,6 +14,8 @@ export interface PaperPart {
   problem: string;
   params?: unknown;
   marks: number;
+  /** The idea this part tests, when it isn't the problem's own (chapter tests). */
+  concept?: ConceptId;
 }
 
 export interface PaperQuestion {
@@ -193,3 +195,47 @@ export const PAPER_KINDS: PaperKind[] = [
 ];
 
 export const totalMarks = (p: Paper) => p.questions.reduce((s, q) => s + q.parts.reduce((t, x) => t + x.marks, 0), 0);
+
+// ---------------------------------------------------------------- chapter tests
+
+const KIND_MARKS: Record<Problem['kind'], number> = { calc: 4, statement: 8, grid: 8, brief: 4, classify: 3, table: 3, judgement: 6 };
+const KIND_MINUTES: Record<Problem['kind'], number> = { calc: 4, statement: 12, grid: 10, brief: 5, classify: 3, table: 3, judgement: 8 };
+
+/**
+ * A test of a whole chapter: one question on every idea in it, with fresh numbers, under exam conditions.
+ * Passing it ticks the chapter off, for anyone who already knows the material.
+ */
+export function chapterTest(act: Act, seed: number): Paper {
+  const rng = mulberry32(seed);
+  const used = new Set<string>();
+  const questions: PaperQuestion[] = [];
+  let minutes = 0;
+  for (const concept of act.concepts) {
+    const own = Object.values(PROBLEMS).filter((p) => p.concept === concept && !used.has(p.id));
+    const pool = own.length ? own : problemsFor(concept).filter((p) => !used.has(p.id));
+    if (!pool.length) continue;
+    // Calculations and statements first: they are the better test of whether it has really sunk in.
+    const worked = pool.filter((p) => hasParams(p));
+    const from = worked.length ? worked : pool;
+    const p = from[Math.floor(rng() * from.length)];
+    used.add(p.id);
+    minutes += KIND_MINUTES[p.kind];
+    questions.push({
+      title: `${questions.length + 1}. ${CONCEPTS[concept].name}`,
+      stem: '',
+      parts: [{ label: '', problem: p.id, params: hasParams(p) ? p.vary(rng) : undefined, marks: KIND_MARKS[p.kind], concept }],
+    });
+  }
+  return { id: `chapter-${act.number}`, title: `Chapter ${act.numeral} test-out: ${act.title}`, minutes: Math.max(10, Math.ceil(minutes * 1.1)), questions };
+}
+
+export const CHAPTER_PREFIX = 'chapter-';
+
+/** The kind behind a paper id, including the chapter tests, which are built on the fly. */
+export function paperKind(id: string): PaperKind | undefined {
+  if (!id.startsWith(CHAPTER_PREFIX)) return PAPER_KINDS.find((k) => k.id === id);
+  const act = ACTS[Number(id.slice(CHAPTER_PREFIX.length)) - 1];
+  if (!act) return undefined;
+  const probe = chapterTest(act, 1);
+  return { id, title: probe.title, blurb: '', minutes: probe.minutes, fixed: false, build: (seed) => chapterTest(act, seed) };
+}

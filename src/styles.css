@@ -3615,3 +3615,17 @@ textarea.written:focus {
 .part-review .marks-table.review {
   margin-top: 8px;
 }
+
+/* The figures from the question, kept on hand while the working is done. */
+.figures { margin: 14px 0; border: 1px solid var(--rule); border-radius: 14px; background: var(--paper-raised); padding: 4px 14px 10px; }
+.figures > summary { cursor: pointer; font-weight: 600; font-size: 14px; padding: 8px 0; list-style: none; }
+.figures > summary::-webkit-details-marker { display: none; }
+.figures > summary .muted { font-weight: 400; font-size: 12.5px; }
+.figures p { margin: 4px 0 8px; font-size: 14.5px; }
+.marks-table.given { margin-bottom: 12px; }
+.marks-table.given td:first-child .muted { font-size: 14px; }
+
+/* Test out of a chapter. */
+.test-out { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-top: 14px; padding: 12px 14px; border: 1px dashed var(--rule-strong); border-radius: 14px; font-size: 14.5px; }
+.test-out .btn { flex: none; }
+@media (max-width: 720px) { .test-out { flex-direction: column; align-items: stretch; } }

@@ -98,3 +98,21 @@ What sets the level:
 - Chapters VII–IX: check against the slides when they're added to the folder.
 - Chapter X: needs the slides and reading.
 - Chapters VIII–X (variances, non-financial information, sustainability): rebuild from the slides when they're added. Chapters VIII and IX currently rest on the exam's formula sheet and the past paper only.
+
+## Test out of a chapter
+
+Every chapter on the map has an "Already know this?" button. It builds a test with one question on every idea in the
+chapter (new numbers each time) and runs it under mock-exam conditions: one clock, no tips, no feedback until the end.
+Score 75% and the chapter's episodes and boss are ticked off ("Tested out"), the ideas the player showed they know move up
+to Practising, and the pop quizzes confirm them over later days. Miss it and nothing is lost; the report lists what to
+revisit. The code is `chapterTest` in `src/content/papers.ts` and `testOutChapter` in `src/engine/mastery.ts`; it reuses
+`PaperPlayer`.
+
+## Keeping the figures on screen
+
+- Statement builder: the subtotals move no longer prints the totals it asks for; the bottom-line and decision moves keep
+  the statement on screen with the player's own subtotals.
+- Calculations and statements re-show the accounts and the numbers from the question ("The figures") from the second move
+  on, so nothing needs scrolling back for.
+- Guided level only: figures the question simply states are filled in (`src/engine/given.ts`), and "Plug in" asks only for
+  figures that have to be worked out. Set `given: false` on an input where an automatic match is a coincidence.

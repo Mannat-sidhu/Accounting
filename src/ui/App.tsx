@@ -1,7 +1,9 @@
 // App shell: status bar, news line, and the screens.
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ACTS, ALL_CONCEPT_IDS, CHARACTERS, CONCEPTS, findSession } from '../content';
+import { chapterTest } from '../content/papers';
 import { eur, eurSigned } from '../engine/format';
+import { newSeed } from '../engine/rng';
 import { conceptState, intervalScale, isDue, stageOf, weakest } from '../engine/mastery';
 import { STARTING_VALUE, exportSave, freshSave, importSave } from '../engine/save';
 import type { Act, Stage } from '../engine/types';
@@ -161,6 +163,7 @@ function Today() {
 function ActMap() {
   const { save, go } = useGame();
   const resume = save.resume ? findSession(save.resume.sessionId) : null;
+  const testMinutes = useMemo(() => Object.fromEntries(ACTS.map((a) => [a.number, a.draft ? 0 : chapterTest(a, 1).minutes])), []);
   // Topics up to the mid-term are refreshers, so the suggested start is the first unplayed core episode (cash flow).
   const firstOpen =
     ACTS.filter((a) => !a.draft && !a.refresher)
@@ -175,7 +178,7 @@ function ActMap() {
         <h1>{save.houseName}</h1>
         <p>Year one is over. Now read the books: where the profit came from, where the cash went, and what to do next. Every good call moves the house’s value.</p>
         <p className="muted" style={{ fontSize: 14 }}>
-          Chapters I–III are quick refreshers; play them in any order, or skip them. Chapter IV starts cash flow from scratch.
+          Chapters I–III are quick refreshers; play them in any order, or skip them. Chapter IV starts cash flow from scratch. Know a chapter already? Take its test and, if you pass, you move straight on.
         </p>
         {resume ? (
           <button type="button" className="btn big" onClick={() => go({ name: 'play', sessionId: resume.session.id })}>
@@ -235,7 +238,7 @@ function ActMap() {
                         {rec ? '✓' : unlocked ? i + 1 : '🔒'}
                       </button>
                       <div className="node-title">{s.title}</div>
-                      <div className="node-sub">{rec ? <Stars n={starsFor(rec.score, rec.max)} /> : s.blurb}</div>
+                      <div className="node-sub">{rec ? rec.testedOut ? 'Tested out ✓' : <Stars n={starsFor(rec.score, rec.max)} /> : s.blurb}</div>
                     </li>
                   );
                 })}
@@ -253,7 +256,7 @@ function ActMap() {
                     <div className="node-title">Boss: {act.boss.title}</div>
                     <div className="node-sub">
                       {save.bosses[act.number] ? (
-                        <Stars n={starsFor(save.bosses[act.number].score, save.bosses[act.number].max)} />
+                        save.bosses[act.number].testedOut ? 'Tested out ✓' : <Stars n={starsFor(save.bosses[act.number].score, save.bosses[act.number].max)} />
                       ) : (
                         'No help from Margaux.'
                       )}
@@ -261,6 +264,17 @@ function ActMap() {
                   </li>
                 )}
               </ol>
+              {!(done === total && (!act.boss || save.bosses[act.number])) && (
+                <div className="test-out">
+                  <div>
+                    <strong>Already know this?</strong>
+                    <span className="muted"> One question on every idea, about {testMinutes[act.number]} minutes. Score 75% and the chapter is ticked off.</span>
+                  </div>
+                  <button type="button" className="btn ghost small" onClick={() => go({ name: 'paper', kind: `chapter-${act.number}`, seed: newSeed() })}>
+                    Test out of Chapter {act.numeral}
+                  </button>
+                </div>
+              )}
             </article>
           );
         })}

@@ -161,3 +161,33 @@ export function weakest(save: SaveData, ids: ConceptId[], n = 3) {
     })
     .slice(0, n);
 }
+
+/** Share of a chapter test needed to tick the chapter off. */
+export const TEST_OUT_PASS = 0.75;
+
+/**
+ * Passing a chapter test ticks off the chapter's episodes and boss, so the player can move on. Ideas they showed
+ * they know move up to Practising (the pop quizzes then confirm them over separate days); the rest are simply met.
+ */
+export function testOutChapter(
+  save: SaveData,
+  chapter: { sessionIds: string[]; boss: number | null; concepts: ConceptId[] },
+  byConcept: Record<ConceptId, { got: number; of: number }>,
+  now: number,
+): SaveData {
+  let out = save;
+  for (const id of chapter.concepts) {
+    const r = byConcept[id];
+    const known = !!r && r.of > 0 && r.got / r.of >= TEST_OUT_PASS;
+    out = introduce(out, id, now);
+    if (known) {
+      const c = conceptState(out, id);
+      if (c.stage === 'new') out = { ...out, mastery: { ...out.mastery, [id]: { ...c, stage: 'practising', wins: [now], attempts: c.attempts + 1, cleanAttempts: c.cleanAttempts + 1, lastSeen: now } } };
+    }
+  }
+  const sessions = { ...out.sessions };
+  for (const id of chapter.sessionIds) if (!sessions[id]) sessions[id] = { at: now, score: 0, max: 0, testedOut: true };
+  const bosses = { ...out.bosses };
+  if (chapter.boss !== null && !bosses[chapter.boss]) bosses[chapter.boss] = { at: now, score: 0, max: 0, testedOut: true };
+  return { ...out, sessions, bosses };
+}

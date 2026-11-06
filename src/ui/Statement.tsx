@@ -21,6 +21,7 @@ import { TIER_LABEL } from '../engine/mastery';
 import type { StatementInstance, StatementProblem, Tier } from '../engine/types';
 import { Bubble, Chat } from './Chat';
 import { DataTable } from './Diagrams';
+import { Figures } from './Figures';
 import type { RoundResult } from './Rounds';
 import { Stars, starsFor } from './Stars';
 import { useGame } from './store';
@@ -43,8 +44,23 @@ const MOVE_HELP: Record<Move, string> = {
 };
 
 /** The statement laid out as placed: each section, its lines, and its subtotal. */
-export function StatementView({ inst, placements, mark }: { inst: StatementInstance; placements: Record<string, Placement>; mark?: boolean }) {
+export function StatementView({
+  inst,
+  placements,
+  mark,
+  subtotals = 'show',
+  extra,
+}: {
+  inst: StatementInstance;
+  placements: Record<string, Placement>;
+  mark?: boolean;
+  /** 'hide' keeps the working-out from the player; an object shows the figures they typed. */
+  subtotals?: 'show' | 'hide' | Record<string, number | null>;
+  /** The bottom lines (operating profit, total assets…), with `null` while they are still to be worked out. */
+  extra?: { label: string; value: number | null }[];
+}) {
   const sums = sectionSums(inst, placements);
+  const subShown = (id: string) => (subtotals === 'show' ? acc(sums[id]) : subtotals === 'hide' ? '?' : subtotals[id] == null ? '?' : acc(subtotals[id]!));
   return (
     <div className="statement">
       <div className="statement-head">{inst.heading}</div>
@@ -68,12 +84,22 @@ export function StatementView({ inst, placements, mark }: { inst: StatementInsta
             {s.subtotal && (
               <div className="st-line subtotal">
                 <span>{s.subtotal}</span>
-                <span className="num-tab">{acc(sums[s.id])}</span>
+                <span className="num-tab">{subShown(s.id)}</span>
               </div>
             )}
           </div>
         );
       })}
+      {extra && (
+        <div className="st-section">
+          {extra.map((e) => (
+            <div className="st-line subtotal" key={e.label}>
+              <span>{e.label}</span>
+              <span className="num-tab">{e.value === null ? '?' : acc(e.value)}</span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -311,6 +337,8 @@ export function StatementRunner({ problem, params, seed, intro, onDone, outcomeN
         </ol>
       </nav>
 
+      {idx > 0 && (inst.data || move === 'subtotals' || move === 'totals') && <Figures data={inst.data} prompt={inst.prompt} />}
+
       <div className="panel">
         <h3 className="step-title">
           <span className="move-n">Move {idx + 1}</span> {MOVE_NAMES[move]}
@@ -393,7 +421,7 @@ export function StatementRunner({ problem, params, seed, intro, onDone, outcomeN
 
         {move === 'subtotals' && (
           <div className="st-split">
-            <StatementView inst={inst} placements={placements} mark />
+            <StatementView inst={inst} placements={placements} mark={fb && !exam} subtotals={fb ? 'show' : 'hide'} />
             <div className="fields">
               {subSections.map((s) => {
                 const ok = fb ? subMarks.ok[s.id] : undefined;
@@ -427,7 +455,9 @@ export function StatementRunner({ problem, params, seed, intro, onDone, outcomeN
         )}
 
         {move === 'totals' && (
-          <div className="fields">
+          <div className="st-split">
+            <StatementView inst={inst} placements={placements} subtotals={parsedSubs} extra={inst.totals.map((t) => ({ label: t.label, value: fb ? totMarks.expected[t.key] : null }))} />
+            <div className="fields">
             {inst.totals.map((t) => {
               const ok = fb ? totMarks.ok[t.key] : undefined;
               return (
@@ -442,11 +472,23 @@ export function StatementRunner({ problem, params, seed, intro, onDone, outcomeN
                 </div>
               );
             })}
+            </div>
           </div>
         )}
 
         {move === 'decision' && (
           <>
+            <details className="figures" open>
+              <summary>
+                {inst.heading} <span className="muted">· tap to hide</span>
+              </summary>
+              <StatementView
+                inst={inst}
+                placements={exam ? placements : truth}
+                subtotals={exam ? parsedSubs : 'show'}
+                extra={inst.totals.map((t) => ({ label: t.label, value: exam ? parsedTots[t.key] : totMarks.expected[t.key] }))}
+              />
+            </details>
             <p style={{ fontWeight: 550 }}>{inst.decision.question}</p>
             <div className="seg" role="radiogroup" aria-label="Decision">
               {inst.decision.options.map((o) => (

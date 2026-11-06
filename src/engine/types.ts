@@ -115,6 +115,11 @@ export interface InputSpec {
   explain: string;
   /** Accept the value with either sign (a cost may be typed as 23000 or −23000). */
   signless?: boolean;
+  /**
+   * Whether the figure is simply stated in the question. Below exam level, stated figures are filled in for the player.
+   * Worked out automatically by looking for the number on screen; set to `false` where a match is a coincidence.
+   */
+  given?: boolean;
 }
 
 export interface DecisionOption {

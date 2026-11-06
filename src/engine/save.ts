@@ -21,6 +21,8 @@ export interface SessionRecord {
   at: number;
   score: number;
   max: number;
+  /** Ticked off by passing the chapter test rather than by playing it. */
+  testedOut?: boolean;
 }
 
 /** A finished mock exam: the mark, the time taken, and how each concept went. */

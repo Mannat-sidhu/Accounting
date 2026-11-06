@@ -17,11 +17,13 @@ import {
   type StepKey,
   type StepResult,
 } from '../engine/grading';
+import { givenKeys } from '../engine/given';
 import { mulberry32, shuffle } from '../engine/rng';
 import { TIER_LABEL } from '../engine/mastery';
 import type { CalcProblem, Defensible, InputSpec, ProblemInstance, Tier, Unit } from '../engine/types';
 import { Bubble, Chat } from './Chat';
 import { BreakEven, DataTable } from './Diagrams';
+import { Figures } from './Figures';
 import { Stars, starsFor } from './Stars';
 import { useGame } from './store';
 import { Tex } from './Tex';
@@ -196,7 +198,10 @@ export function ProblemRunner({
     const rng = mulberry32(seed);
     return { formulas: shuffle(rng, inst.formula.options), why: shuffle(rng, inst.decision.why), spot: shuffle(rng, inst.spot?.options ?? []) };
   }, [inst, seed]);
-  const STEPS = stepsOf(inst, tier).filter((s) => !(noCall && s === 'decision'));
+  // Guided: figures the question simply states are filled in for the player; only the ones to work out are asked for.
+  const given = useMemo(() => (tier === 'guided' ? givenKeys(inst) : new Set<string>()), [inst, tier]);
+  const asked = inst.inputs.filter((s) => !given.has(s.key));
+  const STEPS = stepsOf(inst, tier).filter((s) => !(noCall && s === 'decision') && !(s === 'inputs' && asked.length === 0));
   const names = { ...STEP_NAMES, ...inst.stepNames, ...(tier !== 'guided' ? { inputs: 'Your workings' } : {}) };
   const exam = tier === 'exam';
 
@@ -216,7 +221,7 @@ export function ProblemRunner({
   const step = STEPS[stepIdx];
   const isAuto = autoSteps.includes(step);
   const expectedAnswer = inst.solve(expectedValues(inst.inputs));
-  const parsedInputs = Object.fromEntries(inst.inputs.map((s) => [s.key, parseNumber(inputs[s.key] ?? '')]));
+  const parsedInputs = Object.fromEntries(inst.inputs.map((s) => [s.key, given.has(s.key) ? s.expected : parseNumber(inputs[s.key] ?? '')]));
   const hintsAllowed = tier === 'guided';
   const [defensible, setDefensible] = useState<Defensible | null>(null);
 
@@ -227,7 +232,7 @@ export function ProblemRunner({
       case 'formula':
         return formula !== null;
       case 'inputs':
-        return inst.inputs.every((s) => parsedInputs[s.key] !== null);
+        return asked.every((s) => parsedInputs[s.key] !== null);
       case 'answer':
         return parseNumber(answer) !== null;
       case 'decision':
@@ -246,7 +251,7 @@ export function ProblemRunner({
         r = markFormula(inst.formula.correct, formula, h);
         break;
       case 'inputs':
-        r = markInputs(inst.inputs, parsedInputs, h);
+        r = markInputs(asked, parsedInputs, h);
         break;
       case 'answer': {
         const a = markAnswer(inst, parseNumber(answer), results.inputs?.auto ? null : parsedInputs, h);
@@ -406,6 +411,8 @@ export function ProblemRunner({
         </ol>
       </nav>
 
+      {stepIdx > 0 && <Figures data={inst.data} prompt={inst.prompt} />}
+
       <div className="panel">
         <h3 className="step-title">
           <span className="move-n">Move {stepIdx + 1}</span> {names[step]}
@@ -413,7 +420,9 @@ export function ProblemRunner({
         <p className="step-help">
           {isAuto
             ? 'I’ll do the sums on this one. Just check they make sense.'
-            : step === 'inputs' && tier !== 'guided'
+            : step === 'inputs' && given.size > 0
+              ? 'The figures the question states are already in. Work out the rest.'
+              : step === 'inputs' && tier !== 'guided'
               ? `No formula menu this time: decide the method yourself, then put the figures it needs.${exam ? ' Marks come at the end.' : ''}`
               : STEP_HELP[step]}
         </p>
@@ -475,7 +484,23 @@ export function ProblemRunner({
             <AutoInputs specs={inst.inputs} />
           ) : (
             <div className="fields">
-              {inst.inputs.map((s) => {
+              {given.size > 0 && (
+                <table className="marks-table given">
+                  <tbody>
+                    {inst.inputs
+                      .filter((s) => given.has(s.key))
+                      .map((s) => (
+                        <tr key={s.key}>
+                          <td>
+                            <Tex>{s.symbol}</Tex> <span className="muted">{s.label}</span>
+                          </td>
+                          <td className="num-tab">{fmt(s.expected, s.unit)}</td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              )}
+              {asked.map((s) => {
                 const ok = showFeedback ? inputOk(s, parsedInputs[s.key]) : undefined;
                 return (
                   <div key={s.key}>

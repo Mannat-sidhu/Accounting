@@ -100,3 +100,41 @@ describe('daily drill', () => {
   });
   it('stage sets the level used', () => expect(tierFor('common')).toBe('exam'));
 });
+
+import { ACTS as ALL_ACTS, CONCEPTS as ALL_CONCEPTS } from '../src/content';
+import { chapterTest } from '../src/content/papers';
+import { TEST_OUT_PASS, testOutChapter } from '../src/engine/mastery';
+
+describe('chapter test-outs', () => {
+  for (const act of ALL_ACTS.filter((a) => !a.draft)) {
+    it(`Chapter ${act.numeral} tests every idea it teaches`, () => {
+      for (const seed of [1, 2, 3, 4, 5]) {
+        const paper = chapterTest(act, seed);
+        const tested = new Set(paper.questions.flatMap((q) => q.parts.map((p) => p.concept)));
+        for (const c of act.concepts) expect(tested.has(c), `${act.numeral}: ${c} (${ALL_CONCEPTS[c].name}) is not tested`).toBe(true);
+        for (const q of paper.questions) for (const p of q.parts) expect(PROBLEMS[p.problem], p.problem).toBeTruthy();
+        expect(paper.minutes).toBeGreaterThan(5);
+      }
+    });
+  }
+
+  it('ticks off the episodes and the boss, and promotes only what was shown', () => {
+    const act = ALL_ACTS[3];
+    const byConcept = Object.fromEntries(act.concepts.map((c, i) => [c, { got: i === 0 ? 1 : 4, of: 4 }]));
+    const out = testOutChapter(freshSave(), { sessionIds: act.sessions.map((s) => s.id), boss: act.number, concepts: act.concepts }, byConcept, Date.now());
+    for (const s of act.sessions) expect(out.sessions[s.id].testedOut).toBe(true);
+    expect(out.bosses[act.number].testedOut).toBe(true);
+    expect(out.mastery[act.concepts[0]].stage).toBe('new');
+    expect(out.mastery[act.concepts[1]].stage).toBe('practising');
+    expect(TEST_OUT_PASS).toBe(0.75);
+  });
+
+  it('never overwrites an episode that was actually played', () => {
+    const act = ALL_ACTS[3];
+    const save = freshSave();
+    save.sessions[act.sessions[0].id] = { at: 1, score: 9, max: 10 };
+    const out = testOutChapter(save, { sessionIds: act.sessions.map((s) => s.id), boss: null, concepts: [] }, {}, Date.now());
+    expect(out.sessions[act.sessions[0].id].score).toBe(9);
+    expect(out.sessions[act.sessions[0].id].testedOut).toBeUndefined();
+  });
+});
