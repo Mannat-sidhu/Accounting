@@ -545,4 +545,126 @@ export const zbbBrief: BriefProblem = {
     'In zero-based budgeting every item in the budget must be justified from scratch, rather than starting from last year’s figures and adding a little, as incremental budgeting does. Its advantage is that it encourages a more questioning approach, so waste carried over from earlier years is challenged. Its disadvantages are that it can be costly and time-consuming to implement and that employees may feel threatened. Incremental budgeting is simpler and quicker, but it carries forward past waste and treats last year’s spending as an entitlement.',
 };
 
-export const ACT7_PROBLEMS: Problem[] = [budgetBenefits, budgetTypesSort, budgetStepsSort, purchasesBudget, receiptsCalc, slideCashBudget, xmasBudget, behaviourSort, behaviourBrief, methodsSort, zbbBrief, criticismsBrief];
+
+// ---------------------------------------------------------------- the quarter with opening balances
+
+interface QbP {
+  open: number;
+  /** Trade debtors, creditors and accruals at the start: last month’s credit sales, purchases and admin. */
+  debtors: number;
+  creditors: number;
+  accrual: number;
+  sales: number[];
+  purch: number[];
+  wages: number[];
+  admin: number[];
+  capex: number;
+  /** The month (0 or 1) the asset is bought; it is paid for the month after. */
+  capexMonth: number;
+  cashPct: number;
+  adminPct: number;
+}
+
+const QTR = ['January', 'February', 'March'];
+
+export const quarterBudget = defineGrid<QbP>({
+  kind: 'grid',
+  id: 'quarter-budget',
+  title: 'The first quarter',
+  host: 'aoife',
+  concept: 'cash-budget',
+  base: { open: 30000, debtors: 80000, creditors: 50000, accrual: 6000, sales: [220000, 260000, 300000], purch: [64000, 70000, 76000], wages: [84000, 88000, 92000], admin: [44000, 48000, 52000], capex: 90000, capexMonth: 0, cashPct: 60, adminPct: 75 },
+  vary: (rng) => {
+    const s = (lo: number, hi: number, st = 10000) => pickInt(rng, lo, hi, st);
+    const sales = [s(150000, 300000), s(180000, 340000), s(200000, 380000)];
+    return {
+      open: s(10000, 50000, 5000),
+      debtors: s(50000, 130000, 5000),
+      creditors: s(30000, 80000, 5000),
+      accrual: s(3000, 12000, 1000),
+      sales,
+      purch: sales.map((x) => Math.round((x * (0.25 + rng() * 0.1)) / 1000) * 1000),
+      wages: [s(60000, 100000, 2000), s(60000, 100000, 2000), s(60000, 100000, 2000)],
+      admin: [s(30000, 60000, 5000), s(30000, 60000, 5000), s(30000, 60000, 5000)],
+      capex: s(40000, 120000, 10000),
+      capexMonth: pickInt(rng, 0, 1),
+      cashPct: pickOne(rng, [40, 50, 60]),
+      adminPct: pickOne(rng, [70, 75, 80]),
+    };
+  },
+  build: (p) => {
+    const later = 100 - p.cashPct;
+    const admLater = 100 - p.adminPct;
+    const rec = QTR.map((_, i) => (p.sales[i] * p.cashPct) / 100 + (i === 0 ? p.debtors : (p.sales[i - 1] * later) / 100));
+    const sup = QTR.map((_, i) => (i === 0 ? p.creditors : p.purch[i - 1]));
+    const adm = QTR.map((_, i) => (p.admin[i] * p.adminPct) / 100 + (i === 0 ? p.accrual : (p.admin[i - 1] * admLater) / 100));
+    const cap = QTR.map((_, i) => (i === p.capexMonth + 1 ? p.capex : 0));
+    const tot = QTR.map((_, i) => sup[i] + p.wages[i] + adm[i] + cap[i]);
+    const net = QTR.map((_, i) => rec[i] - tot[i]);
+    const bal = A.runningBalance(p.open, net);
+    const low = Math.min(...bal.close);
+    const lowMonth = QTR[bal.close.indexOf(low)];
+    const needOd = low < 0;
+    const cum = (n: number[]) => n.map((_, i) => p.open + n.slice(0, i).reduce((a, b) => a + b, 0));
+    return {
+      prompt: [
+        { who: 'aoife', text: 'A new quarter. I want a cash budget for January to March, and I want to know the bank balance at the end of each month.' },
+        {
+          who: 'margaux',
+          text: `Sales are ${p.cashPct}% cash in the month of sale and ${later}% on credit, received the month after. We pay for materials the month after buying them. Wages are paid in the month. ${p.adminPct}% of admin costs are paid in the month and ${admLater}% the month after. A ${eur(p.capex)} machine is bought in ${QTR[p.capexMonth]} on one month’s credit.`,
+        },
+        `At 31 December: cash ${eur(p.open)}, trade debtors ${eur(p.debtors)}, trade creditors ${eur(p.creditors)}, admin accruals ${eur(p.accrual)}.`,
+      ],
+      ask: 'Fill in the cash budget. What is the balance at the end of each month, and do we need an overdraft?',
+      data: table('Plan (€)', ['', ...QTR], [
+        ['Sales', ...p.sales.map(w0)],
+        ['Materials bought', ...p.purch.map(w0)],
+        ['Wages', ...p.wages.map(w0)],
+        ['Admin expenses', ...p.admin.map(w0)],
+      ]),
+      columns: QTR,
+      unitLabel: '€',
+      rows: [
+        { key: 'sales', label: 'Sales', given: true, hint: '', explain: '', calc: () => p.sales },
+        {
+          key: 'rec',
+          label: 'Receipts from customers',
+          hint: `${p.cashPct}% of this month’s sales, plus the credit part of last month’s. January’s credit receipts are the trade debtors at 31 December.`,
+          explain: `${p.cashPct}% of this month + ${later}% of last month. January: ${p.cashPct}% × ${w0(p.sales[0])} + the opening debtors ${w0(p.debtors)} = ${w0(rec[0])}.`,
+          concept: 'receipts-timing',
+          calc: () => rec,
+        },
+        { key: 'sup', label: 'Payments to suppliers', hint: 'Last month’s purchases. January pays the trade creditors at 31 December.', explain: `Each month pays the month before’s purchases; January pays the opening creditors, ${w0(p.creditors)}.`, calc: () => sup },
+        { key: 'wages', label: 'Wages', given: true, hint: '', explain: '', calc: () => p.wages },
+        { key: 'adm', label: 'Admin expenses paid', hint: `${p.adminPct}% of this month’s admin, plus the ${admLater}% left from last month. January’s is the opening accrual.`, explain: `${p.adminPct}% of this month + ${admLater}% of last month; January adds the opening accrual of ${w0(p.accrual)}.`, calc: () => adm },
+        { key: 'cap', label: 'Machine payment', hint: `Bought in ${QTR[p.capexMonth]} on a month’s credit, so it’s paid in ${QTR[p.capexMonth + 1]}.`, explain: `Bought in ${QTR[p.capexMonth]}, paid a month later in ${QTR[p.capexMonth + 1]}: ${w0(p.capex)}.`, calc: () => cap },
+        { key: 'tot', label: 'Total payments', total: true, hint: 'Suppliers + wages + admin + machine.', explain: 'Add every payment in the month.', calc: (r) => QTR.map((_, i) => (r.sup?.[i] ?? 0) + (r.wages?.[i] ?? 0) + (r.adm?.[i] ?? 0) + (r.cap?.[i] ?? 0)) },
+        { key: 'net', label: 'Net cash flow', total: true, hint: 'Receipts − total payments. Negative if more goes out.', explain: 'Receipts less total payments.', calc: (r) => QTR.map((_, i) => (r.rec?.[i] ?? 0) - (r.tot?.[i] ?? 0)) },
+        { key: 'open', label: 'Opening balance', cells: [1, 2], hint: 'Last month’s closing balance.', explain: `January opens at ${w0(p.open)}; each month opens with last month’s close.`, calc: (r) => cum(r.net ?? net) },
+        { key: 'close', label: 'Closing balance', total: true, hint: 'Opening + net cash flow.', explain: 'Opening balance plus net cash flow.', calc: (r) => QTR.map((_, i) => (r.open?.[i] ?? 0) + (r.net?.[i] ?? 0)) },
+      ],
+      decision: {
+        question: 'Will the business need an overdraft this quarter?',
+        options: [
+          { id: 'od', label: needOd ? `Yes: ${eur(Math.ceil(-low / 1000) * 1000)} or so, at its worst in ${lowMonth}` : 'Yes' },
+          { id: 'ok', label: needOd ? 'No' : `No: the lowest balance is ${eur(low)} in ${lowMonth}` },
+        ],
+        correct: needOd ? 'od' : 'ok',
+        why: whys(
+          needOd ? `The balance goes negative, reaching ${w0(low)} in ${lowMonth}.` : `The closing balance never falls below ${w0(low)}.`,
+          'Sales are rising, so cash must be too.',
+          'The machine is an asset, so it doesn’t affect cash.',
+        ),
+        correctWhy: 'w0',
+        explain: needOd ? `The balance bottoms out at ${eur(low)} in ${lowMonth}: the opening debtors and creditors, the machine and the wages land before enough new cash arrives.` : `The lowest balance is ${eur(low)} in ${lowMonth}: in credit all quarter.`,
+      },
+      working: [`Receipts: ${rec.map(w0).join(', ')}`, `Total payments: ${tot.map(w0).join(', ')}`, `Closing: ${bal.close.map(w0).join(', ')}`],
+      outcomes: {
+        od: { valueDelta: needOd ? 4000 : -1000, news: needOd ? 'The overdraft is in place before the machine is paid for.' : 'An overdraft is arranged and never used.' },
+        ok: { valueDelta: needOd ? -6000 : 1000, news: needOd ? 'A payment bounces. Aoife is not amused.' : 'The quarter passes with the balance always in credit.' },
+      },
+    };
+  },
+});
+
+export const ACT7_PROBLEMS: Problem[] = [budgetBenefits, budgetTypesSort, budgetStepsSort, purchasesBudget, receiptsCalc, slideCashBudget, xmasBudget, quarterBudget, behaviourSort, behaviourBrief, methodsSort, zbbBrief, criticismsBrief];

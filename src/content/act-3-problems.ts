@@ -5,6 +5,7 @@ import { eur } from '../engine/format';
 import { pickInt, pickOne } from '../engine/rng';
 import type { BriefProblem, ClassifyProblem, JudgementProblem, Problem, StatementItem } from '../engine/types';
 import { defineCalc, defineStatement, w0, whys } from './helpers';
+import { TRANS_PROBLEMS } from './trans-problems';
 
 interface IsP {
   sales: number;
@@ -559,4 +560,4 @@ export const mitigantsOpinion: BriefProblem = {
     'In my opinion the measures give significant but not complete protection. Audit gives reasonable, not absolute, assurance and relies on samples and on management’s own estimates. Standards narrow the choices but still leave room for judgement over lives, provisions and write-downs, and that judgement is where profit can be nudged. Governance depends on non-executives being independent and well informed, and regulators usually act after the event. So the measures reduce the risk rather than remove it, and users should still read the accounting policies, look for changes and compare profit with operating cash flow.',
 };
 
-export const ACT3_PROBLEMS: Problem[] = [bullBear, mitigantsOpinion, isBuild, cosCalc, accrualCalc, straightLineCalc, inventoryCalc, recognitionSort, discretionSort, discretionBrief, mitigantsBrief];
+export const ACT3_PROBLEMS: Problem[] = [...TRANS_PROBLEMS, bullBear, mitigantsOpinion, isBuild, cosCalc, accrualCalc, straightLineCalc, inventoryCalc, recognitionSort, discretionSort, discretionBrief, mitigantsBrief];

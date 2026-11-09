@@ -27,6 +27,8 @@ export const EVERYDAY: Record<ConceptId, string> = {
   provisions: 'You think your friend probably won’t pay back the €100. You don’t wait for them to say no: you mentally write some of it off now. That’s a provision.',
   discretion: 'Two honest people can price a second-hand car differently. Profit depends on estimates like that, and someone with a bonus on the line may lean one way.',
 
+  transactions: 'A market stall’s weekend: you sold €300 of cakes but one customer still owes you €40, and you bought €100 of flour but have €30 left. Sales, cost and cash each need their own little tally, built from the same list.',
+
   // Chapter IV
   'cash-v-profit': 'Your friend owes you €50 for a night out. You’ve “earned” it, but you can’t spend it. Meanwhile you paid €300 for a bike that isn’t “used up” yet. Profit and cash are different scoreboards.',
   'cash-jar': 'A piggy bank: what was in it, plus what went in, minus what came out, is what’s in it now. If you know three of those, you can find the fourth.',
@@ -77,6 +79,10 @@ export const EVERYDAY: Record<ConceptId, string> = {
   'standard-cost': 'A recipe says a cake needs 200g of flour at €1 per kg. If you made 10 cakes, you “should” have used 2kg. That’s the standard.',
   'sales-variances': 'You planned to sell 100 hoodies at €40 and sold 110 at €38. You made a sale-volume gain and a price loss. Two different stories in one number.',
   'material-variances': 'You paid more per kilo of flour (a price problem) and also wasted some in the bowl (a usage problem). Variances split those apart.',
+  'overhead-variances': 'The electricity bill for the bakery: the price per unit of power can change (rate), and the ovens can run for longer than planned (efficiency). The rent doesn’t care how many cakes you bake: it’s simply more or less than you budgeted.',
+  'variance-report': 'A page that says: “I planned to end the month with €200. I ended with €170. Here’s why: +€30 from tips, −€80 from the broken phone, +€20 from a cheaper bus pass.” Every line is a variance, and they add up to the gap.',
+  'variance-reverse': 'If you know you overspent your food budget by €60 over 30 days, you know you spent €2 a day more than planned. And if the power cut shut the shop for an afternoon, you don’t blame the cashier for the empty till.',
+  'standards-limits': 'A 2019 recipe says flour costs €1 a kilo. If today it’s €2, every batch is “over budget” and the baker can’t help it. Old targets give old answers, and a target that’s easy to hit stops anyone trying harder.',
   'labour-variances': 'You paid your helper more per hour than planned (rate), and they took longer per cake than planned (efficiency).',
   'variance-causes': 'Cheaper flour might be gritty, so you use more and the cakes take longer. One decision can show up as good news in one variance and bad in two others.',
 

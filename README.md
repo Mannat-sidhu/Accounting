@@ -24,8 +24,8 @@ npm run build    # static site in dist/
 | V | Aoife wants ratios | 5 Financial analysis, liquidity management | Topic 5 slides, Apex, Week 5 question bank answers, past paper Q2 |
 | VI | How many scarves? | 6 CVP | Topic 6 slides, Cottage Industries, past paper Q1 |
 | VII | The Christmas crunch | 7 Budgeting | Topic 7 slides: planning cycle, benefits, setting process, types, the slides' six-month cash budget, behaviour, criticisms, ZBB/ABB/beyond budgeting |
-| VIII | Silk cost more | 10 Variances | **No slides yet**: exam formula sheet and past paper Q3A |
-| IX | More than money | 11 Non-financial info | **No slides yet**: past paper Q3C |
+| VIII | Silk cost more | 8 Variance analysis | Variance slides, the Beltra class question, Week 10 bank (all nine variances, the profit bridge, working backwards, idle time), past paper Q3A |
+| IX | More than money | 11 Non-financial info | **No slides yet**: past paper Q3C; one extra written question for the choose-one Q4 |
 | X | The sustainability report | 12 Sustainability | Placeholder: needs the slides and the Quattrone (2021) reading |
 
 Chapters I–III are marked as refreshers. Every chapter is open from the start; episodes inside a chapter unlock in order. The map's "Start here" button points at Chapter IV.
@@ -44,6 +44,7 @@ Chapter IV starts from what usually goes wrong: treating profit or total assets 
 - `src/content/act-N-{concepts,problems}.ts`, `acts.ts`: the chapters.
 - `src/content/methods.ts`: the key ratios sheet word for word (the **ƒ Formulas** button), the methods and the cast. Niamh Deasy, the auditor, is new.
 - `tests/accounting.test.ts`: solvers against the course's worked answers (class cash flow example, Frozen W1–W13, Apex 1–4, LM1–LM12, Overload, Cottage Industries, Knotted, Onesale, Example 3.8).
+- `tests/variance.test.ts` and `tests/bank.test.ts`: the class question, Big Change, Tricky, the transactions question and the cash budget question reproduced from their worked answers; the profit bridge lands on actual profit for 300 random sets; the balance sheet balances for 300 random businesses.
 - `tests/papers.test.ts`: every mock paper builds and adds to 25 a question; the cash flow clinic's statement reconciles to its target; written-answer caps; glossary and everyday coverage; the drill picker.
 - `tests/render.test.tsx`: every problem mounts at every level of help; a perfect script under exam conditions earns full marks for every calculation, statement and budget grid, with no feedback shown.
 - `tests/content.test.ts`: every problem built with 200 random parameter sets; story numbers checked against the worked answers; no course references in player-facing text.
@@ -95,9 +96,33 @@ What sets the level:
 
 ## To do
 
-- Chapters VII–IX: check against the slides when they're added to the folder.
-- Chapter X: needs the slides and reading.
-- Chapters VIII–X (variances, non-financial information, sustainability): rebuild from the slides when they're added. Chapters VIII and IX currently rest on the exam's formula sheet and the past paper only.
+- Chapters IX and X: check against the slides when they're added to the folder (X needs the slides and the Quattrone reading).
+- Q4's sustainability option needs Chapter X; until then the written question offers the discretion question or non-financial measurement.
+
+## The exam format (from the variance slides)
+
+Four questions of 25 marks in 120 minutes (about a mark a minute). Three are computational with some written analysis, drawn
+from preparing accounts, liquidity and ratios, CVP, cash budgeting and variances. The fourth is written, with a choice of two
+(accounting theory, non-financial measurement, sustainability). The sheet gives the ratios and the variances, **not** CVP.
+
+The mock exams follow that format (`src/content/papers.ts`): "A mixed mock" draws three of the five computational topics at random;
+Mock A, B and C are fixed combinations; every sitting has new numbers, and question 4 asks the player to choose A or B before
+answering (`choice` on `PaperQuestion`; the unchosen option isn't marked). The real Autumn 2025 paper and the cash flow clinic remain.
+The exam day (Friday 11 December, 1–3pm, Blackrock) is the default exam date.
+
+## Questions from the folder
+
+The class question and the weekly answer banks are meant to be done by hand, so the game never uses their numbers: it uses
+similar questions with fresh figures, and the Exam page lists the real ones to try on paper. `tests/variance.test.ts` and
+`tests/bank.test.ts` rebuild the real questions as data and check the solvers give the worked answers (Beltra, Big Change,
+Tricky, the accounts-preparation question, the Week 9 cash budget, and the CVP and liquidity questions).
+
+Answer-sheet slips found while doing this (the game follows the correct arithmetic):
+- Accounts preparation (DEF Limited): the loan is €100,000 in the question, but the answer sheet uses €120,000 for both the cash
+  and the long-term liability. The two errors cancel, so net assets and equity (153,500) are right, but the cash should be 107,500.
+- Variance Analysis 2, VA15: the working multiplies by 4,900 (units, not hours) and arrives at a rate of 16.50, which doesn't follow
+  from VA13 (15.60). It looks inconsistent, so the game's "idle time" question is built on the logic of VA14 only.
+- VA12 and VA14 write the efficiency formula with the actual rate (AR); the arithmetic uses the standard rate, which is correct.
 
 ## Test out of a chapter
 

@@ -55,4 +55,31 @@ export const staffBrief: BriefProblem = {
     'A balanced scorecard would measure four perspectives. Financial: margins, ROCE and cash flow. Customer: satisfaction, repeat orders and complaints. Internal process: defect and rework rates, production time and on-time delivery. Learning and growth: staff turnover, absence, training and engagement. Unaddressed discontent would show first in learning and growth, as turnover and absence rise. Losing skilled staff would then raise defects and slow production while replacements learn, which leads to late, lower-quality work, customer complaints and lost repeat business. Finally the financial perspective would suffer: recruitment and training costs rise and sales and margins fall. Because skills take years to build, the damage to long-term profitability may be lasting, even while this year’s profit still looks healthy.',
 };
 
-export const ACT9_PROBLEMS: Problem[] = [scorecardSort, staffBrief];
+
+export const nonfinBrief: BriefProblem = {
+  kind: 'brief',
+  id: 'nonfin-brief',
+  title: 'Beyond the bottom line',
+  host: 'margaux',
+  concept: 'balanced-scorecard',
+  prompt: [
+    { who: 'idris', text: 'We report profit, cash and ratios. Margaux wants to add “non-financial measures”. Why would I clutter the report?' },
+    { who: 'margaux', text: 'Because profit tells you where you’ve been. Not where you’re going.' },
+  ],
+  question: 'Explain four reasons why a business should use non-financial measures alongside financial ones, with an example of each.',
+  cap: 4,
+  cards: [
+    { text: 'Financial measures look backwards. Non-financial ones (customer satisfaction, staff turnover, defect rates) are early warnings of what profit will do next.', kind: 'key', why: 'Leading, not lagging.' },
+    { text: 'Accounts leave out much that matters: customers, quality, skills and processes. Measures like on-time delivery or training hours capture them.', kind: 'key', why: 'They cover what the accounts can’t.' },
+    { text: 'A balanced scorecard links the measures to strategy across four perspectives, so every team can see how its work drives the goals.', kind: 'key', why: 'Strategy made measurable.' },
+    { text: 'They discourage short-termism: a manager judged only on profit might cut training and quality to hit this year’s figure.', kind: 'key', why: 'Profit alone can be gamed in the short term.' },
+    { text: 'They are often more immediate and easier for staff to influence than profit, so they motivate action day to day.', kind: 'key', why: 'Closer to what people actually do.' },
+    { text: 'Non-financial measures replace the need for financial ones.', kind: 'trap', why: 'They complement the financial measures; they don’t replace them.' },
+    { text: 'Non-financial measures are always easy and cheap to measure.', kind: 'trap', why: 'Some, like employee morale, are hard to measure well.' },
+    { text: 'Financial statements are prepared by accountants.', kind: 'filler', why: 'True, but not an answer to the question.' },
+  ],
+  model:
+    'A business should use non-financial measures alongside financial ones for several reasons. First, financial measures look backwards, while measures such as customer satisfaction, staff turnover and defect rates are leading indicators that warn of changes in future profit. Second, the accounts leave out much that drives success, such as customers, quality, skills and processes, which measures like on-time delivery or training hours capture. Third, a balanced scorecard links measures to strategy across four perspectives, so each team can see how it contributes. Fourth, they discourage short-termism: a manager judged only on profit might cut training or quality to hit this year’s figure, whereas a scorecard exposes the cost of doing so.',
+};
+
+export const ACT9_PROBLEMS: Problem[] = [scorecardSort, nonfinBrief, staffBrief];

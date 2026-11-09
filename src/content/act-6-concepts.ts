@@ -59,6 +59,8 @@ export const ACT6_CONCEPTS: Concept[] = [
         'In units: fixed costs ÷ contribution per unit. You need just enough units for their contribution to pay all the fixed costs.',
         'In value: fixed costs ÷ CMR. Or break-even units × price, which gives the same answer.',
         'On a break-even chart, fixed costs are a flat line. Total cost starts at the fixed costs and rises by the variable cost per unit. Revenue starts at zero and rises faster. They cross at break-even.',
+        'If you’re given the CMR instead of the variable cost, the contribution per unit is simply price × CMR. A price rise with unchanged variable costs adds the whole rise to contribution.',
+        'The formula sheet on the day gives the ratios and the variances, but not the CVP formulae. These ones you have to know by heart.',
       ],
       formula: { tex: '\\text{BEP (units)} = \\frac{\\text{Fixed cost}}{\\text{Price} - \\text{Variable cost per unit}} \\qquad \\text{BEP (value)} = \\frac{\\text{Fixed cost}}{\\text{CMR}}' },
       example: {

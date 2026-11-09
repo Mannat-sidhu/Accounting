@@ -18,6 +18,7 @@ import { ACT8_CONCEPTS } from './act-8-concepts';
 import { ACT8_PROBLEMS } from './act-8-problems';
 import { ACT9_CONCEPTS } from './act-9-concepts';
 import { ACT9_PROBLEMS } from './act-9-problems';
+import { BANK_PROBLEMS } from './bank-problems';
 import { ACTS } from './acts';
 
 export { ACTS } from './acts';
@@ -28,7 +29,7 @@ export const CONCEPTS: Record<ConceptId, Concept> = Object.fromEntries(
 );
 
 export const PROBLEMS: Record<string, Problem> = Object.fromEntries(
-  [ACT1_PROBLEMS, ACT2_PROBLEMS, ACT3_PROBLEMS, ACT4_PROBLEMS, ACT5_PROBLEMS, ACT6_PROBLEMS, ACT7_PROBLEMS, ACT8_PROBLEMS, ACT9_PROBLEMS].flat().map((p) => [p.id, p]),
+  [ACT1_PROBLEMS, ACT2_PROBLEMS, ACT3_PROBLEMS, ACT4_PROBLEMS, ACT5_PROBLEMS, ACT6_PROBLEMS, ACT7_PROBLEMS, ACT8_PROBLEMS, ACT9_PROBLEMS, BANK_PROBLEMS].flat().map((p) => [p.id, p]),
 );
 
 export const ALL_CONCEPT_IDS: ConceptId[] = ACTS.flatMap((a) => a.concepts);

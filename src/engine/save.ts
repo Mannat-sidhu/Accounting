@@ -105,6 +105,10 @@ export class LocalSaveStore implements SaveStore {
 }
 
 export const STARTING_VALUE = 150_000;
+/** Friday 11 December, 1pm to 3pm, Blackrock Examination Hall. */
+export const EXAM_DAY = '2026-12-11';
+/** The date used before the real one was known. A save still carrying it moves to the real exam day. */
+const GUESSED_EXAM_DAY = '2026-11-22';
 
 export function freshSave(houseName = 'Atelier Noor', now = Date.now()): SaveData {
   return {
@@ -112,7 +116,7 @@ export function freshSave(houseName = 'Atelier Noor', now = Date.now()): SaveDat
     edition: 'accounts',
     houseName,
     createdAt: now,
-    settings: { examDate: '2026-11-22', theme: 'system' },
+    settings: { examDate: EXAM_DAY, theme: 'system' },
     value: STARTING_VALUE,
     cash: STARTING_VALUE,
     news: [],
@@ -131,7 +135,9 @@ export function migrate(raw: unknown): SaveData {
   if (!raw || typeof raw !== 'object' || (raw as SaveData).version !== 1 || (raw as SaveData).edition !== 'accounts') throw new Error('Not an Atelier Noor: The Books save file');
   const base = freshSave();
   const d = raw as Partial<SaveData>;
-  return { ...base, ...d, settings: { ...base.settings, ...d.settings } } as SaveData;
+  const settings = { ...base.settings, ...d.settings };
+  if (settings.examDate === GUESSED_EXAM_DAY) settings.examDate = EXAM_DAY;
+  return { ...base, ...d, settings } as SaveData;
 }
 
 export function exportSave(data: SaveData) {

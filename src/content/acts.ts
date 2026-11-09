@@ -4,7 +4,8 @@ import type { Act } from '../engine/types';
 import { FROST } from './act-4-problems';
 import { HOUSE, OVERLOAD } from './act-5-problems';
 import { KNOTTED } from './act-6-problems';
-import { ONESALE } from './act-8-problems';
+import { COATS } from './act-8-problems';
+import { SCARVES } from './act-8-problems';
 
 const ACT_1: Act = {
   number: 1,
@@ -99,7 +100,7 @@ const ACT_3: Act = {
   topic: 'Topic 3: The income statement',
   refresher: true,
   blurb: 'Did we actually make a profit? And who gets to decide?',
-  concepts: ['is-layout', 'cost-of-sales', 'recognition', 'accruals-prepayments', 'depreciation', 'inventory-methods', 'provisions', 'discretion'],
+  concepts: ['is-layout', 'cost-of-sales', 'recognition', 'accruals-prepayments', 'depreciation', 'inventory-methods', 'provisions', 'discretion', 'transactions'],
   sessions: [
     {
       id: 'a3s1',
@@ -143,6 +144,26 @@ const ACT_3: Act = {
         { kind: 'problem', problem: 'bull-bear' },
         { kind: 'problem', problem: 'discretion-brief' },
         { kind: 'problem', problem: 'mitigants-brief' },
+        { kind: 'spotcheck' },
+      ],
+    },
+    {
+      id: 'a3s3',
+      title: 'The new boutique',
+      blurb: 'A year’s transactions in a list: income statement, cash, and balance sheet.',
+      parts: [
+        {
+          kind: 'story',
+          scene: 'The new boutique · 31 December',
+          beats: [
+            { who: 'niamh', text: 'A new boutique has traded for a year. All I have is a list of what happened. I need the income statement and the balance sheet.' },
+            { who: 'margaux', text: 'Same facts, three views: profit, cash, and what we own and owe. One at a time.' },
+          ],
+        },
+        { kind: 'lesson', concepts: ['transactions'] },
+        { kind: 'problem', problem: 'trans-is' },
+        { kind: 'problem', problem: 'trans-cash' },
+        { kind: 'problem', problem: 'trans-bs' },
         { kind: 'spotcheck' },
       ],
     },
@@ -305,12 +326,14 @@ const ACT_5: Act = {
         },
         { kind: 'lesson', concepts: ['efficiency'] },
         { kind: 'problem', problem: 'ratio-efficiency', tier: 'unguided' },
+        { kind: 'problem', problem: 'ratio-reverse', tier: 'unguided' },
         { kind: 'problem', problem: 'cash-cycle' },
         { kind: 'lesson', concepts: ['liquidity-management'] },
         { kind: 'problem', problem: 'credit-control' },
         { kind: 'problem', problem: 'prompt-discount', tier: 'unguided' },
         { kind: 'lesson', concepts: ['debt-finance-options'] },
         { kind: 'problem', problem: 'invoice-discounting' },
+        { kind: 'problem', problem: 'max-fee', tier: 'unguided' },
         { kind: 'problem', problem: 'factoring', tier: 'unguided' },
         { kind: 'problem', problem: 'debtor-info' },
         { kind: 'spotcheck' },
@@ -367,6 +390,7 @@ const ACT_6: Act = {
         { kind: 'problem', problem: 'cvp-be' },
         { kind: 'problem', problem: 'cvp-target', tier: 'unguided' },
         { kind: 'problem', problem: 'cvp-mos', tier: 'unguided' },
+        { kind: 'problem', problem: 'cvp-cmr', tier: 'unguided' },
         { kind: 'spotcheck' },
       ],
     },
@@ -407,6 +431,7 @@ const ACT_6: Act = {
     ],
     paper: [
       { ref: 'Knotted Ltd (past paper Q1)', note: 'Parts A to G, every line of working written out.' },
+      { ref: 'Week 6 question bank', note: 'CVP1 to CVP11: from the contribution ratio, target profit, a price rise, and replacing variable overhead with a fixed fee.' },
       { ref: 'Cottage Industries', note: 'Q1 to Q3, with and without the machine, and the comments.' },
       { ref: 'CVP Example 1 and the sales mix example', note: 'Break-even, target profit, margin of safety, composite units.' },
     ],
@@ -455,6 +480,7 @@ const ACT_7: Act = {
         { kind: 'problem', problem: 'receipts-month' },
         { kind: 'problem', problem: 'slide-cash-budget' },
         { kind: 'problem', problem: 'xmas-budget', tier: 'unguided' },
+        { kind: 'problem', problem: 'quarter-budget', tier: 'unguided' },
         { kind: 'spotcheck' },
       ],
     },
@@ -498,6 +524,7 @@ const ACT_7: Act = {
     ],
     paper: [
       { ref: 'The six-month cash budget', note: 'Redo it on paper from the figures: total payments, surplus, opening and closing balance. Target closing balances: 30, 40, 27, 44, 57, 60.' },
+      { ref: 'Week 9 question bank', note: 'BUD1 to BUD3: January to March with opening balances. Closing cash: 41,000, 77,000 and 58,000.' },
       { ref: 'Past paper Q3(B)', note: 'Four benefits of a regular budget, a sentence on how each helps.' },
       { ref: 'Your own list', note: 'Write out the eight criticisms of traditional budgeting and pair each with one example.' },
     ],
@@ -508,38 +535,85 @@ const ACT_8: Act = {
   number: 8,
   numeral: 'VIII',
   title: 'Silk cost more',
-  topic: 'Topic 10: Variance analysis (no slides yet: formulas from the exam sheet)',
-  blurb: 'Price, usage, or Theo? Every variance asks a question.',
-  concepts: ['standard-cost', 'sales-variances', 'material-variances', 'labour-variances', 'variance-causes'],
+  topic: 'Topic 8: Variance analysis (slides, class question, Week 10 question bank)',
+  blurb: 'Price, usage, or Theo? Nine variances, one bridge from budgeted to actual profit.',
+  concepts: ['standard-cost', 'sales-variances', 'material-variances', 'labour-variances', 'overhead-variances', 'variance-report', 'variance-causes', 'variance-reverse', 'standards-limits'],
   sessions: [
     {
       id: 'a8s1',
-      title: 'Price, usage, or Theo?',
-      blurb: 'Sales, materials and labour variances, and what causes them.',
+      title: 'The yardstick',
+      blurb: 'Standards, the flexed budget, and the two sales variances.',
       parts: [
-        { kind: 'story', beats: [{ who: 'idris', text: 'We spent more on silk than the budget said. Whose fault is it?' }, { who: 'margaux', text: 'Let the variances tell us.' }] },
-        { kind: 'lesson', concepts: ['standard-cost', 'sales-variances'] },
+        { kind: 'story', scene: 'The studio · year-end review', beats: [{ who: 'idris', text: 'We spent more on silk than the budget said. Whose fault is it?' }, { who: 'margaux', text: 'First we need a fair yardstick. Then the variances can tell us.' }] },
+        { kind: 'lesson', concepts: ['standard-cost'] },
         { kind: 'problem', problem: 'flex-tf' },
+        { kind: 'problem', problem: 'var-budget-profit' },
+        { kind: 'problem', problem: 'control-sort' },
+        { kind: 'lesson', concepts: ['sales-variances'] },
         { kind: 'problem', problem: 'var-sales' },
+        { kind: 'spotcheck' },
+      ],
+    },
+    {
+      id: 'a8s2',
+      title: 'Where the money went',
+      blurb: 'Materials, labour, and the overheads.',
+      parts: [
+        { kind: 'story', beats: [{ who: 'niamh', text: 'Costs next. For each one, two questions: did we pay more per unit, and did we use more units?' }] },
         { kind: 'lesson', concepts: ['material-variances', 'labour-variances'] },
         { kind: 'problem', problem: 'var-materials' },
         { kind: 'problem', problem: 'var-labour' },
+        { kind: 'lesson', concepts: ['overhead-variances'] },
+        { kind: 'problem', problem: 'var-overheads' },
+        { kind: 'problem', problem: 'var-overheads', params: { kind: 'fixed', d: COATS }, tier: 'unguided' },
+        { kind: 'spotcheck' },
+      ],
+    },
+    {
+      id: 'a8s3',
+      title: 'The page for the board',
+      blurb: 'The bridge to actual profit, why variances happen, and when they aren’t anyone’s fault.',
+      parts: [
+        { kind: 'story', beats: [{ who: 'idris', text: 'Nine numbers is not an answer. Give me one page.' }] },
+        { kind: 'lesson', concepts: ['variance-report'] },
+        { kind: 'problem', problem: 'var-reconcile' },
         { kind: 'lesson', concepts: ['variance-causes'] },
         { kind: 'problem', problem: 'variance-causes' },
+        { kind: 'problem', problem: 'usage-reasons-brief' },
+        { kind: 'lesson', concepts: ['variance-reverse'] },
+        { kind: 'problem', problem: 'var-reverse' },
+        { kind: 'lesson', concepts: ['standards-limits'] },
+        { kind: 'problem', problem: 'standards-limits-brief' },
         { kind: 'spotcheck' },
       ],
     },
   ],
   boss: {
-    title: 'One product, three variances',
-    intro: [{ who: 'niamh', text: 'A client of mine makes a single bespoke product. No stock held. Three variances, then why budgets matter.' }],
-    problems: [
-      { problem: 'var-sales', params: { kind: 'sales-price', d: ONESALE } },
-      { problem: 'var-materials', params: { kind: 'mat-qty', d: ONESALE } },
-      { problem: 'var-materials', params: { kind: 'mat-rate', d: ONESALE } },
-      { problem: 'budget-benefits' },
+    title: 'The scarf maker',
+    intro: [
+      { who: 'niamh', text: 'A client of mine makes cashmere scarves. Here are its standards and last year’s results. I need all nine variances and the page for the board.' },
+      { who: 'margaux', text: 'Eleven parts on one set of numbers. No help from me.' },
     ],
-    paper: [{ ref: 'Onesale Ltd (past paper Q3)', note: 'Parts A and B written out. Then try C after the scorecard chapter.' }],
+    problems: [
+      { problem: 'var-budget-profit', params: { d: SCARVES, kind: 'budget' } },
+      { problem: 'var-sales', params: { kind: 'sales-price', d: SCARVES } },
+      { problem: 'var-sales', params: { kind: 'sales-volume', d: SCARVES } },
+      { problem: 'var-materials', params: { kind: 'mat-rate', d: SCARVES } },
+      { problem: 'var-materials', params: { kind: 'mat-qty', d: SCARVES } },
+      { problem: 'var-labour', params: { kind: 'lab-rate', d: SCARVES } },
+      { problem: 'var-labour', params: { kind: 'lab-eff', d: SCARVES } },
+      { problem: 'var-overheads', params: { kind: 'vo-rate', d: SCARVES } },
+      { problem: 'var-overheads', params: { kind: 'vo-eff', d: SCARVES } },
+      { problem: 'var-overheads', params: { kind: 'fixed', d: SCARVES } },
+      { problem: 'var-reconcile', params: SCARVES },
+      { problem: 'usage-reasons-brief' },
+    ],
+    paper: [
+      { ref: 'Beltra Fine Foods (class question)', note: 'Parts (a) and (b): all nine variances and the statement for the managing director. Target: budgeted 1,500,000 to actual 1,540,000.' },
+      { ref: 'Week 10 bank: Big Change', note: 'VA1 to VA11: budgeted profit, all nine variances, and the reconciliation.' },
+      { ref: 'Week 10 bank: Tricky Ltd', note: 'VA12 to VA15: working back to the actual rate, and setting aside the hours lost to the power cut.' },
+      { ref: 'Onesale Ltd (past paper Q3)', note: 'Parts A and B written out. Then try C after the scorecard chapter.' },
+    ],
   },
 };
 
@@ -559,6 +633,7 @@ const ACT_9: Act = {
         { kind: 'story', beats: [{ who: 'margaux', text: 'Profit tells you how last year went. These tell you how next year will go.' }] },
         { kind: 'lesson', concepts: ['balanced-scorecard'] },
         { kind: 'problem', problem: 'scorecard-sort' },
+        { kind: 'problem', problem: 'nonfin-brief' },
         { kind: 'lesson', concepts: ['staff-and-profit'] },
         { kind: 'problem', problem: 'staff-brief' },
         { kind: 'spotcheck' },

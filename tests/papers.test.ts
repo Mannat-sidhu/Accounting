@@ -23,17 +23,18 @@ describe('mock exam papers', () => {
           }
         }
         for (const q of paper.questions) expect(q.parts.reduce((s, x) => s + x.marks, 0), `${kind.id}: ${q.title}`).toBe(25);
+        expect(totalMarks(paper), `${kind.id} total`).toBe(kind.id === 'cashflow' ? 50 : 100);
       }
     });
   }
   it('the real paper is 100 marks in 120 minutes; the clinic is 50 in 60', () => {
-    const real = PAPER_KINDS[0].build(1);
+    const real = PAPER_KINDS.find((k) => k.id === 'autumn25')!.build(1);
     expect([totalMarks(real), real.minutes]).toEqual([100, 120]);
-    const clinic = PAPER_KINDS[2].build(1);
+    const clinic = PAPER_KINDS.find((k) => k.id === 'cashflow')!.build(1);
     expect([totalMarks(clinic), clinic.minutes]).toEqual([50, 60]);
   });
   it('Autumn 2025 numbers: Knotted (A) is €40 a tie; Overload (C) proposals (29,000) and (13,000)', () => {
-    const q = PAPER_KINDS[0].build(1).questions;
+    const q = PAPER_KINDS.find((k) => k.id === 'autumn25')!.build(1).questions;
     const ans = (label: string, qi: number) => {
       const p = q[qi].parts.find((x) => x.label === label)!;
       const prob = PROBLEMS[p.problem] as CalcProblem;
@@ -47,7 +48,7 @@ describe('mock exam papers', () => {
   });
   it('the varied cash flow clinic reconciles: the statement and the stated target agree (30 seeds)', () => {
     for (let seed = 1; seed <= 30; seed++) {
-      const q1 = PAPER_KINDS[2].build(seed).questions[0];
+      const q1 = PAPER_KINDS.find((k) => k.id === 'cashflow')!.build(seed).questions[0];
       const cce = q1.parts[0];
       const inst = (PROBLEMS['cce-change'] as CalcProblem).build(cce.params);
       const target = inst.solve(expectedValues(inst.inputs));
@@ -57,6 +58,39 @@ describe('mock exam papers', () => {
       const sums = sectionSums(built, truePlacements(built));
       expect(sums.op + sums.inv + sums.fin, `seed ${seed}`).toBeCloseTo(target, 6);
     }
+  });
+});
+
+describe('mock exams in the real format', () => {
+  const kinds = ['mixed', 'mock-a', 'mock-b', 'mock-c', 'fresh'].map((id) => PAPER_KINDS.find((k) => k.id === id)!);
+  it('three computational questions, then a written question with two options to choose from', () => {
+    for (const k of kinds)
+      for (let seed = 1; seed <= 10; seed++) {
+        const p = k.build(seed);
+        expect(p.questions.length, k.id).toBe(5);
+        const [a, b] = [p.questions[3], p.questions[4]];
+        expect(a.choice?.group).toBe('q4');
+        expect(b.choice?.group).toBe('q4');
+        expect([a.choice!.option, b.choice!.option]).toEqual([0, 1]);
+        expect(p.questions.slice(0, 3).every((q) => !q.choice)).toBe(true);
+        expect(totalMarks(p)).toBe(100);
+      }
+  });
+  it('the mixed mock draws three different topics and varies with the seed', () => {
+    const mixed = kinds[0];
+    const seen = new Set<string>();
+    for (let seed = 1; seed <= 30; seed++) {
+      const titles = mixed.build(seed).questions.slice(0, 3).map((q) => q.title.replace(/^Question \d: /, ''));
+      expect(new Set(titles).size).toBe(3);
+      seen.add(titles.join('|'));
+    }
+    expect(seen.size).toBeGreaterThan(5);
+  });
+  it('new numbers every time: two sittings never share the same variance data', () => {
+    const c = kinds[3];
+    const p1 = JSON.stringify(c.build(1).questions[0].parts[1].params);
+    const p2 = JSON.stringify(c.build(2).questions[0].parts[1].params);
+    expect(p1).not.toBe(p2);
   });
 });
 

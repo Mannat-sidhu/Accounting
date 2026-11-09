@@ -27,7 +27,10 @@ export function ExamHub() {
         <h1>Mock exams</h1>
         <p>
           Sit a full paper under real conditions: one clock, no tips, no feedback until the end. Then see where every mark went.
-          {daysLeft > 0 ? ` ${daysLeft} days to your exam.` : ''}
+          {daysLeft > 0 ? ` ${daysLeft} days to your exam: Friday 11 December, 1 to 3pm, Blackrock Examination Hall.` : ''}
+        </p>
+        <p className="muted" style={{ fontSize: 14 }}>
+          The real paper has four questions of 25 marks in 120 minutes. Three are computational with some written analysis (drawn from accounts, liquidity and ratios, CVP, cash budgeting and variances); the fourth is written, and you choose one of two options. The sheet gives you the ratios and the variance formulae, but <strong>not</strong> the CVP ones.
         </p>
       </section>
       <div className="paper-list">
@@ -72,6 +75,17 @@ export function ExamHub() {
           </table>
         </>
       )}
+      <h2 className="section-title">Questions to try on paper</h2>
+      <p className="muted" style={{ fontSize: 13.5, maxWidth: 560 }}>
+        The game’s papers use new numbers. These are the questions from your own folder: do them yourself, then check your answers against the answer sheets.
+      </p>
+      <ul className="muted" style={{ fontSize: 14, maxWidth: 620, lineHeight: 1.6 }}>
+        <li>Variances: the Beltra Fine Foods class question, then Big Change and Tricky (Week 10, VA1 to VA15).</li>
+        <li>Cash budgets: Week 9, BUD1 to BUD3.</li>
+        <li>CVP: Week 6, CVP1 to CVP11 (remember the CVP formulae aren’t on the sheet).</li>
+        <li>Liquidity: Week 5, Slowpay, Fastpay and Sluggish (LM1 to LM12).</li>
+        <li>Preparing accounts: Week 1 to 4, DEF Limited.</li>
+      </ul>
       <p className="muted" style={{ marginTop: 24, fontSize: 13.5, maxWidth: 560 }}>
         On the day you’ll have a non-programmable calculator and the sheet of key ratios and formulae. The sheet is the ƒ button at the top, as on the paper.
       </p>
@@ -104,6 +118,15 @@ export function PaperPlayer({ kind, seed }: { kind: string; seed: number }) {
   const [stoppedAt, setStoppedAt] = useState<number | null>(null);
   const [now, setNow] = useState(Date.now());
   const [saved, setSaved] = useState(false);
+  // Where the paper offers a choice (“answer A or B”), which option was picked.
+  const [chosen, setChosen] = useState<Record<string, number>>({});
+  /** Is this part one that counts? Before a choice is made, both options are open; in the report, an unmade choice counts option A. */
+  const isActive = (i: number, report: boolean) => {
+    const q = parts[i].q;
+    if (!q.choice) return true;
+    const c = chosen[q.choice.group];
+    return c === undefined ? (report ? q.choice.option === 0 : true) : c === q.choice.option;
+  };
 
   useEffect(() => {
     if (phase !== 'sitting') return;
@@ -151,8 +174,14 @@ export function PaperPlayer({ kind, seed }: { kind: string; seed: number }) {
         <section className="panel">
           <ul className="rules">
             <li>
-              <strong>{paper.questions.length} questions</strong>, {marks(totalMarks(paper))} marks, <strong>{paper.minutes} minutes</strong>. The clock starts when you press the button and doesn’t stop.
+              <strong>{paper.questions.filter((q) => !q.choice || q.choice.option === 0).length} questions</strong>, {marks(totalMarks(paper))} marks, <strong>{paper.minutes} minutes</strong>. The clock starts when you press the button and doesn’t stop.
             </li>
+            {!chapter && paper.minutes >= 100 && (
+              <li>
+                Aim for about <strong>a mark a minute</strong>: roughly 30 minutes a question, and use the marks to decide how much to write.
+                {paper.questions.some((q) => q.choice) && ' The last question is written, and you choose one of two options.'}
+              </li>
+            )}
             {chapter && (
               <li>
                 <strong>Score {Math.round(TEST_OUT_PASS * 100)}% or more and Chapter {chapter.numeral} is ticked off</strong>: its episodes and boss count as done, and you move straight on. Miss it and nothing is lost; the report shows what to revisit.
@@ -189,6 +218,61 @@ export function PaperPlayer({ kind, seed }: { kind: string; seed: number }) {
   }
 
   // ---- sitting
+  if (phase === 'sitting' && part && part.q.choice && chosen[part.q.choice.group] === undefined) {
+    const group = part.q.choice.group;
+    const options = paper.questions.map((q, qi) => ({ q, qi })).filter(({ q }) => q.choice?.group === group);
+    const choose = (option: number) => {
+      setChosen((c) => ({ ...c, [group]: option }));
+      setQueue((q) => q.filter((i) => !(parts[i].q.choice?.group === group && parts[i].q.choice?.option !== option)));
+      window.scrollTo({ top: 0 });
+    };
+    return (
+      <div className="play-main narrow">
+        <header className="session-head">
+          <div className="spread">
+            <div className="eyebrow">
+              {paper.title} · {queue.length} {queue.length === 1 ? 'part' : 'parts'} left
+            </div>
+            <span className={`exam-clock${left < 600 ? ' low' : ''}`}>⏱ {clock(left)}</span>
+          </div>
+          <h1>Question {options[0].qi + 1}: answer ONE</h1>
+        </header>
+        <p className="exam-stem">Read both, then choose. The one you don’t choose isn’t marked.</p>
+        {options.map(({ q }) => (
+          <section className="panel" key={q.title} style={{ marginBottom: 12 }}>
+            <h3 className="step-title">{q.title}</h3>
+            <p className="muted" style={{ fontSize: 14 }}>
+              {q.stem.replace(/^Answer ONE of the two written questions, A or B\.\s*/, '')}
+            </p>
+            <p className="muted" style={{ fontSize: 13 }}>
+              {q.parts.length} parts · {marks(q.parts.reduce((t, x) => t + x.marks, 0))} marks
+            </p>
+            <div className="step-actions">
+              <span className="spacer" />
+              <button type="button" className="btn" onClick={() => choose(q.choice!.option)}>
+                Answer this one →
+              </button>
+            </div>
+          </section>
+        ))}
+        {queue.length > 1 && (
+          <div className="step-actions" style={{ marginTop: 14 }}>
+            <button
+              type="button"
+              className="link"
+              onClick={() => {
+                setQueue((q) => [...q.slice(1), q[0]]);
+                window.scrollTo({ top: 0 });
+              }}
+            >
+              Skip this question for now
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   if (phase === 'sitting' && part) {
     const problem = PROBLEMS[part.p.problem];
     const firstOfQ = part.pi === 0;
@@ -203,9 +287,7 @@ export function PaperPlayer({ kind, seed }: { kind: string; seed: number }) {
           </div>
           <h1>{part.q.title}</h1>
           <div className="progress-dots" aria-hidden>
-            {parts.map((_, i) => (
-              <span key={i} className={results[i] ? 'done' : i === cur ? 'here' : ''} />
-            ))}
+            {parts.map((_, i) => (isActive(i, false) ? <span key={i} className={results[i] ? 'done' : i === cur ? 'here' : ''} /> : null))}
           </div>
         </header>
         {firstOfQ && part.q.stem && <p className="exam-stem">{part.q.stem}</p>}
@@ -254,15 +336,17 @@ export function PaperPlayer({ kind, seed }: { kind: string; seed: number }) {
     }
     return r.max ? r.score / r.max : 0;
   };
-  const got = (i: number) => parts[i].p.marks * fraction(i);
-  const total = totalMarks(paper);
+  const live = (i: number) => isActive(i, true);
+  const got = (i: number) => (live(i) ? parts[i].p.marks * fraction(i) : 0);
+  const total = parts.reduce((s, x, i) => s + (live(i) ? x.p.marks : 0), 0);
   const score = parts.reduce((s, _, i) => s + got(i), 0);
   const seconds = Math.round(((stoppedAt ?? now) - startedAt) / 1000);
   const timedOut = stoppedAt !== null && stoppedAt - startedAt >= paper.minutes * 60_000 - 1500;
-  const written = parts.map((x, i) => ({ x, i })).filter(({ i }) => results[i]?.written !== undefined);
+  const written = parts.map((x, i) => ({ x, i })).filter(({ i }) => live(i) && results[i]?.written !== undefined);
 
   const byConcept: Record<ConceptId, { got: number; of: number }> = {};
   parts.forEach((x, i) => {
+    if (!live(i)) return;
     const c = x.p.concept ?? PROBLEMS[x.p.problem].concept;
     byConcept[c] = { got: (byConcept[c]?.got ?? 0) + got(i), of: (byConcept[c]?.of ?? 0) + x.p.marks };
   });
@@ -327,6 +411,7 @@ export function PaperPlayer({ kind, seed }: { kind: string; seed: number }) {
 
       {paper.questions.map((q, qi) => {
         const idx = parts.map((x, i) => ({ x, i })).filter(({ x }) => x.qi === qi);
+        if (idx.length && !live(idx[0].i)) return null;
         const qGot = idx.reduce((s, { i }) => s + got(i), 0);
         const qMax = idx.reduce((s, { x }) => s + x.p.marks, 0);
         return (

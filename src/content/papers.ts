@@ -1,12 +1,13 @@
 // Mock exam papers. A paper is a set of questions, each worth 25 marks, built from the same problems as the chapters
 // and played under exam conditions: no tips, no feedback until the end, one clock for the whole paper.
 import { mulberry32 } from '../engine/rng';
-import type { Act, CalcProblem, ConceptId, Problem, StatementProblem } from '../engine/types';
+import type { Act, CalcProblem, ConceptId, ParamProblem, Problem, StatementProblem } from '../engine/types';
 import { ACTS, CONCEPTS, PROBLEMS, hasParams, problemsFor } from './index';
 import type { FrostP } from './act-4-problems';
 import { OVERLOAD, freshHouse, type FinData } from './act-5-problems';
 import { KNOTTED, varyCvp } from './act-6-problems';
-import { ONESALE, varyData } from './act-8-problems';
+import { ONESALE, varyData, type VarKind } from './act-8-problems';
+import { varyTrans } from './trans-problems';
 
 export interface PaperPart {
   /** (A), (B) i, and so on, as printed on the paper. */
@@ -19,6 +20,8 @@ export interface PaperPart {
 }
 
 export interface PaperQuestion {
+  /** Two questions with the same group are alternatives: the paper says “answer one”. */
+  choice?: { group: string; option: number };
   title: string;
   /** One line of scene-setting shown above the question. */
   stem: string;
@@ -51,6 +54,21 @@ const Q4: PaperQuestion = {
     { label: '(c)', problem: 'mitigants-opinion', marks: 4 },
   ],
 };
+
+/** The written question: two options, answer one. Option B is the non-financial measurement question. */
+const Q4_CHOICE: PaperQuestion[] = [
+  { ...Q4, choice: { group: 'q4', option: 0 }, title: 'Question 4, option A: the directors’ discretion', stem: 'Answer ONE of the two written questions, A or B. (The real paper’s second option is on sustainability, which needs a chapter that isn’t built yet.) ' + Q4.stem.replace(/ \(The paper also[^)]*\)/, '') },
+  {
+    choice: { group: 'q4', option: 1 },
+    title: 'Question 4, option B: measuring more than money',
+    stem: 'Answer ONE of the two written questions, A or B. A fashion house that has always reported profit is thinking about a balanced scorecard.',
+    parts: [
+      { label: '(a)', problem: 'scorecard-sort', marks: 5 },
+      { label: '(b)', problem: 'nonfin-brief', marks: 8 },
+      { label: '(c)', problem: 'staff-brief', marks: 12 },
+    ],
+  },
+];
 
 /** The four parts of a CVP question over one set of numbers. */
 const cvpQuestion = (title: string, stem: string, d: unknown, cut: number, lift: number): PaperQuestion => ({
@@ -114,33 +132,125 @@ const autumn25 = (): Paper => ({
   ],
 });
 
-/** The same shape with new numbers, so the answers can’t be remembered. */
-const fresh = (seed: number): Paper => {
-  const rng = mulberry32(seed);
+// ---------------------------------------------------------------- questions by topic, each with new numbers
+
+type Topic = 'accounts' | 'ratios' | 'cvp' | 'budget' | 'variance';
+
+const qCvp = (rng: () => number, n: number): PaperQuestion => {
   const cvp = { ...varyCvp(rng), totals: true, product: 'silk ties' };
   const cut = Math.max(1, Math.round((cvp.price - cvp.vc) * 0.2));
+  return cvpQuestion(`Question ${n}: a CVP budget`, `A business makes ${cvp.product}. Its budget for the year is based on ${cvp.units.toLocaleString('en-GB')} units.`, cvp, cut, 15);
+};
+
+const qRatios = (rng: () => number, n: number): PaperQuestion => {
   const house = freshHouse(rng);
-  const days = Math.round(((house.rec[1] / house.creditSales) * 365));
+  const days = Math.round((house.rec[1] / house.creditSales) * 365);
   const ccTo = Math.max(15, days - 30);
   const funds = 5 + Math.floor(rng() * 6);
+  return ratioQuestion(
+    `Question ${n}: ${house.name}`,
+    'The accounts are given. The CFO has two proposals for improving cash management in relation to trade debtors.',
+    house,
+    { inv: 60, deb: 70, cover: 4 },
+    { sales: house.creditSales, daysNow: null, receivables: house.rec[1], to: ccTo, by: null, funds, cost: 10000 + Math.round(rng() * 8) * 5000, name: house.name },
+    { receivables: house.rec[1], sales: 0, days: 0, eligible: 75, advance: 80, facility: 2 + Math.floor(rng() * 2), fee: 5000 + Math.round(rng() * 6) * 5000, funds, limit: null },
+  );
+};
+
+/** The shape of the real paper's variance question: three variances, then two written parts. */
+const qVarianceLite = (rng: () => number, n: number): PaperQuestion => {
   const v = varyData(rng);
+  return varianceQuestion(`Question ${n}: a standard-cost business`, `A business makes ${v.product}. Budgeted and actual figures for the last year are given.`, v);
+};
+
+/** The full set: budgeted profit, all nine variances, the statement for the board, and two written parts. */
+const qVarianceFull = (rng: () => number, n: number): PaperQuestion => {
+  const d = varyData(rng);
+  const k = (kind: VarKind) => ({ kind, d });
+  return {
+    title: `Question ${n}: variance analysis`,
+    stem: `A business makes ${d.product}. Its standard costs, its budget and its actual results for the year are given.`,
+    parts: [
+      { label: '(A)', problem: 'var-budget-profit', params: { d, kind: 'budget' }, marks: 1 },
+      { label: '(B) a', problem: 'var-sales', params: k('sales-price'), marks: 1.5 },
+      { label: '(B) b', problem: 'var-sales', params: k('sales-volume'), marks: 1.5 },
+      { label: '(C) a', problem: 'var-materials', params: k('mat-rate'), marks: 1.5 },
+      { label: '(C) b', problem: 'var-materials', params: k('mat-qty'), marks: 1.5 },
+      { label: '(D) a', problem: 'var-labour', params: k('lab-rate'), marks: 1.5 },
+      { label: '(D) b', problem: 'var-labour', params: k('lab-eff'), marks: 1.5 },
+      { label: '(E) a', problem: 'var-overheads', params: k('vo-rate'), marks: 1.5 },
+      { label: '(E) b', problem: 'var-overheads', params: k('vo-eff'), marks: 1.5 },
+      { label: '(E) c', problem: 'var-overheads', params: k('fixed'), marks: 1.5 },
+      { label: '(F)', problem: 'var-reconcile', params: d, marks: 5 },
+      { label: '(G)', problem: 'usage-reasons-brief', marks: 2 },
+      { label: '(H)', problem: 'standards-limits-brief', marks: 3.5 },
+    ],
+  };
+};
+
+/** Preparing accounts from a list of transactions: income statement, cash, balance sheet. */
+const qAccounts = (rng: () => number, n: number): PaperQuestion => {
+  const p = varyTrans(rng);
+  return {
+    title: `Question ${n}: preparing accounts`,
+    stem: 'A new business has traded for its first year. Its transactions for the year are listed.',
+    parts: [
+      { label: '(A)', problem: 'trans-is', params: p, marks: 9 },
+      { label: '(B)', problem: 'trans-cash', params: p, marks: 5 },
+      { label: '(C)', problem: 'trans-bs', params: p, marks: 11 },
+    ],
+  };
+};
+
+/** A cash budget with opening balances, receipts and payments timing, plus a written part. */
+const qBudget = (rng: () => number, n: number): PaperQuestion => {
+  const vary = (id: string) => (PROBLEMS[id] as ParamProblem).vary(rng);
+  return {
+    title: `Question ${n}: cash budgeting`,
+    stem: 'A business is preparing its cash budget for the next quarter. Its sales, purchases and payment terms are given.',
+    parts: [
+      { label: '(A)', problem: 'receipts-month', params: vary('receipts-month'), marks: 4 },
+      { label: '(B)', problem: 'purchases-budget', params: vary('purchases-budget'), marks: 4 },
+      { label: '(C)', problem: 'quarter-budget', params: vary('quarter-budget'), marks: 11 },
+      { label: '(D)', problem: 'budget-benefits', marks: 6 },
+    ],
+  };
+};
+
+const TOPIC_BUILDERS: Record<Topic, (rng: () => number, n: number) => PaperQuestion> = {
+  accounts: qAccounts,
+  ratios: qRatios,
+  cvp: qCvp,
+  budget: qBudget,
+  variance: qVarianceFull,
+};
+
+/** Three computational questions, one written question with a choice of two. The topics are drawn from the syllabus. */
+const sitting = (id: string, title: string, topics: Topic[]) => (seed: number): Paper => {
+  const rng = mulberry32(seed);
+  return { id, title, minutes: 120, questions: [...topics.map((t, i) => TOPIC_BUILDERS[t](rng, i + 1)), ...Q4_CHOICE] };
+};
+
+const ALL_TOPICS: Topic[] = ['accounts', 'ratios', 'cvp', 'budget', 'variance'];
+
+const mixed = (seed: number): Paper => {
+  const rng = mulberry32(seed * 7919 + 13);
+  const pick = [...ALL_TOPICS];
+  for (let i = pick.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [pick[i], pick[j]] = [pick[j], pick[i]];
+  }
+  return sitting('mixed', 'A mixed mock: three topics drawn at random', pick.slice(0, 3))(seed);
+};
+
+/** The real paper’s shape (CVP, ratios, standard costing, then the written question) with new numbers. */
+const fresh = (seed: number): Paper => {
+  const rng = mulberry32(seed);
   return {
     id: 'fresh',
     title: 'A fresh paper: new numbers',
     minutes: 120,
-    questions: [
-      cvpQuestion('Question 1: a CVP budget', `A business makes ${cvp.product}. Its budget for the year is based on ${cvp.units.toLocaleString('en-GB')} units.`, cvp, cut, 15),
-      ratioQuestion(
-        `Question 2: ${house.name}`,
-        'The accounts are given. The CFO has two proposals for improving cash management in relation to trade debtors.',
-        house,
-        { inv: 60, deb: 70, cover: 4 },
-        { sales: house.creditSales, daysNow: null, receivables: house.rec[1], to: ccTo, by: null, funds, cost: 10000 + Math.round(rng() * 8) * 5000, name: house.name },
-        { receivables: house.rec[1], sales: 0, days: 0, eligible: 75, advance: 80, facility: 2 + Math.floor(rng() * 2), fee: 5000 + Math.round(rng() * 6) * 5000, funds, limit: null },
-      ),
-      varianceQuestion('Question 3: a standard-cost business', `A business makes ${v.product}. Budgeted and actual figures for the last year are given.`, v),
-      Q4,
-    ],
+    questions: [qCvp(rng, 1), qRatios(rng, 2), qVarianceLite(rng, 3), ...Q4_CHOICE],
   };
 };
 
@@ -190,11 +300,16 @@ const cashflow = (seed: number): Paper => {
 
 export const PAPER_KINDS: PaperKind[] = [
   { id: 'autumn25', title: 'Autumn 2025, as set', blurb: 'The real paper: Knotted, Overload, Onesale and the discretion question, with the real numbers. 4 questions, 100 marks, 120 minutes.', minutes: 120, fixed: true, build: () => autumn25() },
-  { id: 'fresh', title: 'A fresh paper', blurb: 'The same shape, new numbers every time, so you can’t remember the answers. 4 questions, 100 marks, 120 minutes.', minutes: 120, fixed: false, build: fresh },
+  { id: 'mixed', title: 'A mixed mock: three topics at random', blurb: 'Built like the real exam: three computational questions drawn from accounts, ratios and liquidity, CVP, cash budgeting and variances, plus one written question where you choose A or B. New topics and numbers every time.', minutes: 120, fixed: false, build: mixed },
+  { id: 'mock-a', title: 'Mock A: accounts, ratios and variances', blurb: 'Preparing accounts from a list of transactions; liquidity and ratios; all nine variances. Then written question 4, A or B. New numbers every time.', minutes: 120, fixed: false, build: sitting('mock-a', 'Mock A: accounts, ratios and variances', ['accounts', 'ratios', 'variance']) },
+  { id: 'mock-b', title: 'Mock B: CVP, cash budget and accounts', blurb: 'Cost–volume–profit; a cash budget with opening balances; preparing accounts. Then written question 4, A or B. New numbers every time.', minutes: 120, fixed: false, build: sitting('mock-b', 'Mock B: CVP, cash budget and accounts', ['cvp', 'budget', 'accounts']) },
+  { id: 'mock-c', title: 'Mock C: variances, CVP and cash budget', blurb: 'The variance report; cost–volume–profit; the quarter’s cash budget. Then written question 4, A or B. New numbers every time.', minutes: 120, fixed: false, build: sitting('mock-c', 'Mock C: variances, CVP and cash budget', ['variance', 'cvp', 'budget']) },
+  { id: 'fresh', title: 'A fresh Autumn 2025 paper', blurb: 'The real paper’s shape (CVP, liquidity and ratios, standard costing), with new numbers every time. Question 4 lets you choose A or B. 120 minutes.', minutes: 120, fixed: false, build: fresh },
   { id: 'cashflow', title: 'Cash flow clinic', blurb: 'Two cash flow questions with new numbers each time: every working, then the full statement. 50 marks, 60 minutes.', minutes: 60, fixed: false, build: cashflow },
 ];
 
-export const totalMarks = (p: Paper) => p.questions.reduce((s, q) => s + q.parts.reduce((t, x) => t + x.marks, 0), 0);
+/** Marks on offer: where two questions are alternatives, only one of them counts. */
+export const totalMarks = (p: Paper) => p.questions.filter((q) => !q.choice || q.choice.option === 0).reduce((s, q) => s + q.parts.reduce((t, x) => t + x.marks, 0), 0);
 
 // ---------------------------------------------------------------- chapter tests
 

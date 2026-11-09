@@ -1,6 +1,7 @@
 import { ACTS, CONCEPTS, METHODS, PROBLEMS, problemsFor } from '../src/content';
 import { expectedValues, markSubtotals, markTotals, markWorksheet, sectionSums, truePlacements } from '../src/engine/grading';
 import { mulberry32 } from '../src/engine/rng';
+import { ONESALE } from '../src/content/act-8-problems';
 import type { CalcProblem, GridProblem, ProblemInstance, StatementInstance, StatementProblem } from '../src/engine/types';
 
 const BANNED = /lecture|lecturer|textbook|exam script|McLaney|Atrill|BMA|Brightspace/i;
@@ -162,11 +163,10 @@ describe('story numbers match the worked answers', () => {
     expect(parts[5]).toBeCloseTo(1240000, 0);
     expect(parts[6]).toBeCloseTo(76250, 4);
   });
-  it('Onesale boss: (280,000), 24,000, (20,000)', () => {
-    const b = ACTS[7].boss!.problems.slice(0, 3).map((x) => answerOf(x.problem, x.params));
-    expect(b[0]).toBeCloseTo(-280000, 0);
-    expect(b[1]).toBeCloseTo(24000, 0);
-    expect(b[2]).toBeCloseTo(-20000, 0);
+  it('Onesale (past paper): (280,000), 24,000, (20,000)', () => {
+    expect(answerOf('var-sales', { kind: 'sales-price', d: ONESALE })).toBeCloseTo(-280000, 0);
+    expect(answerOf('var-materials', { kind: 'mat-qty', d: ONESALE })).toBeCloseTo(24000, 0);
+    expect(answerOf('var-materials', { kind: 'mat-rate', d: ONESALE })).toBeCloseTo(-20000, 0);
   });
   it('Frozen boss workings: (205), 900, 120, 1,400, 830, 600', () => {
     const v = ACTS[3].boss!.problems.slice(0, 6).map((x) => answerOf(x.problem, x.params));

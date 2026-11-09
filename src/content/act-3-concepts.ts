@@ -150,4 +150,24 @@ export const ACT3_CONCEPTS: Concept[] = [
       traps: ['Most discretion moves profit between years rather than creating it: release a provision now and there’s less to release later.', 'Comparing profit with operating cash flow is a quick test: profit that never turns into cash is a warning sign.'],
     },
   }),
+  c({
+    id: 'transactions',
+    name: 'From a list of transactions to the accounts',
+    summary: 'Sort each transaction into income statement, balance sheet and cash. Sales and costs count when they happen; cash counts when money moves.',
+    lesson: {
+      plain: [
+        'A written question often gives you a year’s transactions and asks for the income statement, then the balance sheet. Work in this order and nothing gets lost.',
+        'Income statement first. Sales are what was sold, paid or not. Cost of sales = inventory bought − inventory unsold at the year end. Expenses are what was incurred (paid + still owed), plus depreciation on the equipment. Then interest.',
+        'Cash next, because it isn’t given. Add what came in (shares, loan, cash from customers = sales − what customers still owe) and take off what went out (equipment, cash to suppliers = purchases − what we still owe, interest, bills actually paid).',
+        'Then the balance sheet. Equipment at cost less accumulated depreciation. Inventory, trade receivables and cash. Trade payables and accruals are current liabilities; the bank loan is non-current. Equity is share capital plus the year’s profit.',
+        'Check: net assets = equity. If they differ by a round number, a transaction went to the wrong place.',
+      ],
+      example: {
+        prompt: 'Sales €100,000, of which €20,000 is unpaid. Purchases €60,000, of which €10,000 is unpaid; €15,000 of inventory is unsold.',
+        working: ['Cost of sales = 60,000 − 15,000 = 45,000', 'Cash from customers = 100,000 − 20,000 = 80,000', 'Cash to suppliers = 60,000 − 10,000 = 50,000'],
+        answer: 'Cost of sales €45,000; customers paid €80,000; suppliers were paid €50,000.',
+      },
+      traps: ['Don’t put cash received in the income statement: it shows sales. Don’t put equipment, a loan or share capital in it at all.', 'An unpaid expense is still an expense: it’s an accrual on the balance sheet.', 'The year’s profit goes into equity as retained profit; the sales figure itself does not.'],
+    },
+  }),
 ];
