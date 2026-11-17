@@ -2,7 +2,7 @@
 // and read where the marks went, with a link back to the cheat card for every weak spot.
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { ACTS, CONCEPTS, PROBLEMS } from '../content';
-import { CHAPTER_PREFIX, PAPER_KINDS, paperKind, totalMarks, type Paper } from '../content/papers';
+import { CHAPTER_PREFIX, PAPER_KINDS, REVIEW_PREFIX, paperKind, totalMarks, type Paper } from '../content/papers';
 import { markBrief } from '../engine/grading';
 import { TEST_OUT_PASS, testOutChapter } from '../engine/mastery';
 import { newSeed } from '../engine/rng';
@@ -55,6 +55,34 @@ export function ExamHub() {
           );
         })}
       </div>
+      <h2 className="section-title">Mixed reviews: everything so far</h2>
+      <p className="muted" style={{ fontSize: 13.5, maxWidth: 600 }}>
+        Each one covers Chapter I up to the chapter named, with questions that don’t say which chapter they come from, and cases that need several topics at once. New numbers every time.
+      </p>
+      <div className="paper-list">
+        {ACTS.filter((a) => a.number >= 2 && !a.draft).map((a) => {
+          const id = `${REVIEW_PREFIX}${a.number}`;
+          const k = paperKind(id)!;
+          const tries = save.exams.filter((e) => e.paper === id);
+          const best = tries.reduce((m, e) => Math.max(m, pctOf(e.score, e.max)), 0);
+          return (
+            <article className="paper-card" key={id}>
+              <div>
+                <h2>{k.title.replace('Review: ', '')}</h2>
+                <p className="muted">About {k.minutes} minutes.</p>
+                {tries.length > 0 && (
+                  <p className="muted" style={{ fontSize: 13 }}>
+                    {tries.length} {tries.length === 1 ? 'attempt' : 'attempts'} · best {best}% · last {pctOf(tries[0].score, tries[0].max)}%
+                  </p>
+                )}
+              </div>
+              <button type="button" className="btn ghost" onClick={() => go({ name: 'paper', kind: id, seed: newSeed() })}>
+                {tries.length ? 'Again' : 'Start'} →
+              </button>
+            </article>
+          );
+        })}
+      </div>
       {save.exams.length > 0 && (
         <>
           <h2 className="section-title">Your attempts</h2>
@@ -80,6 +108,7 @@ export function ExamHub() {
         The game’s papers use new numbers. These are the questions from your own folder: do them yourself, then check your answers against the answer sheets.
       </p>
       <ul className="muted" style={{ fontSize: 14, maxWidth: 620, lineHeight: 1.6 }}>
+        <li>Whole papers: Sample Exam One (Relax Ltd, ABC Ltd, Eureka Ltd, and the Irish Postal Service scorecard) and Sample Exam Two (Planning Ltd, Practice Ltd, Cashflow Ltd, and the annual report question). Sit them in 120 minutes.</li>
         <li>Variances: the Beltra Fine Foods class question, then Big Change and Tricky (Week 10, VA1 to VA15).</li>
         <li>Cash budgets: Week 9, BUD1 to BUD3.</li>
         <li>CVP: Week 6, CVP1 to CVP11 (remember the CVP formulae aren’t on the sheet).</li>
@@ -107,6 +136,7 @@ interface PartResult {
 export function PaperPlayer({ kind, seed }: { kind: string; seed: number }) {
   const { setSave, go, openLesson } = useGame();
   const def = paperKind(kind)!;
+  const review = kind.startsWith(REVIEW_PREFIX);
   const chapter = kind.startsWith(CHAPTER_PREFIX) ? ACTS[Number(kind.slice(CHAPTER_PREFIX.length)) - 1] : null;
   const paper: Paper = useMemo(() => def.build(seed), [def, seed]);
   const parts = useMemo(() => paper.questions.flatMap((q, qi) => q.parts.map((p, pi) => ({ q, qi, p, pi }))), [paper]);
@@ -168,7 +198,7 @@ export function PaperPlayer({ kind, seed }: { kind: string; seed: number }) {
     return (
       <div className="play-main narrow">
         <header className="session-head">
-          <div className="eyebrow">{chapter ? 'Chapter test' : 'Mock exam'}</div>
+          <div className="eyebrow">{chapter ? 'Chapter test' : review ? 'Mixed review' : 'Mock exam'}</div>
           <h1>{paper.title}</h1>
         </header>
         <section className="panel">
@@ -176,7 +206,12 @@ export function PaperPlayer({ kind, seed }: { kind: string; seed: number }) {
             <li>
               <strong>{paper.questions.filter((q) => !q.choice || q.choice.option === 0).length} questions</strong>, {marks(totalMarks(paper))} marks, <strong>{paper.minutes} minutes</strong>. The clock starts when you press the button and doesn’t stop.
             </li>
-            {!chapter && paper.minutes >= 100 && (
+            {review && (
+              <li>
+                <strong>Nothing says which chapter a question comes from.</strong> Working out which tool a question needs is part of the test, and some questions need two or three chapters at once.
+              </li>
+            )}
+            {!chapter && paper.minutes >= 45 && (
               <li>
                 Aim for about <strong>a mark a minute</strong>: roughly 30 minutes a question, and use the marks to decide how much to write.
                 {paper.questions.some((q) => q.choice) && ' The last question is written, and you choose one of two options.'}

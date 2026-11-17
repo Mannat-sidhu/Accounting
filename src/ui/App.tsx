@@ -1,7 +1,7 @@
 // App shell: status bar, news line, and the screens.
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ACTS, ALL_CONCEPT_IDS, CHARACTERS, CONCEPTS, findSession } from '../content';
-import { chapterTest } from '../content/papers';
+import { chapterTest, reviewTest } from '../content/papers';
 import { eur, eurSigned } from '../engine/format';
 import { newSeed } from '../engine/rng';
 import { conceptState, intervalScale, isDue, stageOf, weakest } from '../engine/mastery';
@@ -164,6 +164,7 @@ function ActMap() {
   const { save, go } = useGame();
   const resume = save.resume ? findSession(save.resume.sessionId) : null;
   const testMinutes = useMemo(() => Object.fromEntries(ACTS.map((a) => [a.number, a.draft ? 0 : chapterTest(a, 1).minutes])), []);
+  const reviewMinutes = useMemo(() => Object.fromEntries(ACTS.map((a) => [a.number, a.draft || a.number < 2 ? 0 : reviewTest(a.number, 1).minutes])), []);
   // Topics up to the mid-term are refreshers, so the suggested start is the first unplayed core episode (cash flow).
   const firstOpen =
     ACTS.filter((a) => !a.draft && !a.refresher)
@@ -264,6 +265,17 @@ function ActMap() {
                   </li>
                 )}
               </ol>
+              {done > 0 && act.number >= 2 && !act.draft && (
+                <div className="test-out">
+                  <div>
+                    <strong>Mixed review.</strong>
+                    <span className="muted"> Chapters I to {act.numeral} together, about {reviewMinutes[act.number]} minutes. The questions don’t say which chapter they’re from, and some need several at once.</span>
+                  </div>
+                  <button type="button" className="btn ghost small" onClick={() => go({ name: 'paper', kind: `review-${act.number}`, seed: newSeed() })}>
+                    Review I–{act.numeral}
+                  </button>
+                </div>
+              )}
               {!(done === total && (!act.boss || save.bosses[act.number])) && (
                 <div className="test-out">
                   <div>

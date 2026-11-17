@@ -63,7 +63,7 @@ export const varyTrans = (rng: () => number): TransP => {
 };
 
 /** The transactions, numbered as on a paper, as the player reads them. */
-const story = (p: TransP): string[] => {
+export const story = (p: TransP): string[] => {
   const d = derived(p);
   return [
     `The house’s new boutique started on 1 January and traded for the year to 31 December. These are the totals for the year.`,

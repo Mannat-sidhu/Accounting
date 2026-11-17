@@ -312,6 +312,8 @@ interface WhatIfP extends CvpP {
   cut: number;
   lift: number;
   ask: 'profit' | 'be';
+  /** Extra fixed spend that comes with the change, such as a campaign. */
+  extra?: number;
 }
 
 export const cvpWhatIf = defineCalc<WhatIfP>({
@@ -329,14 +331,15 @@ export const cvpWhatIf = defineCalc<WhatIfP>({
   build: (p) => {
     const cpu = A.contributionPerUnit(p.price, p.vc);
     const cpu2 = cpu - p.cut;
+    const fixed2 = p.fixed + (p.extra ?? 0);
     const units2 = p.units * (1 + p.lift / 100);
     const before = A.profitAt(p.units, cpu, p.fixed);
-    const after = A.profitAt(units2, cpu2, p.fixed);
-    const be2 = A.breakEvenUnits(p.fixed, cpu2);
+    const after = A.profitAt(units2, cpu2, fixed2);
+    const be2 = A.breakEvenUnits(fixed2, cpu2);
     const better = after > before;
     const profit = p.ask === 'profit';
     return {
-      prompt: [{ who: 'theo', mood: 'happy', text: `Cut the price of the ${p.product} by ${eur(p.cut, 2)} and I’ll sell ${p.lift}% more. Guaranteed!` }, costLines(p)],
+      prompt: [{ who: 'theo', mood: 'happy', text: p.extra ? `Spend ${eur(p.extra)} more on a campaign, cut the price of the ${p.product} by ${eur(p.cut, 2)}, and I’ll sell ${p.lift}% more. Guaranteed!` : `Cut the price of the ${p.product} by ${eur(p.cut, 2)} and I’ll sell ${p.lift}% more. Guaranteed!` }, costLines(p)],
       ask: profit ? 'What would the revised budgeted profit be?' : `What would the revised break-even point be, in ${p.unit}?`,
       formula: profit
         ? { options: ['cvp-profit', 'profit-per-unit', 'target-units'], correct: 'cvp-profit', explain: 'New volume × new contribution per unit, less the unchanged fixed costs.' }
@@ -344,12 +347,12 @@ export const cvpWhatIf = defineCalc<WhatIfP>({
       inputs: [
         { key: 'C', symbol: '\\text{New CpU}', label: 'New contribution per unit', unit: 'eur', expected: cpu2, explain: `(${w2(p.price)} − ${w2(p.cut)}) − ${w2(p.vc)} = ${w2(cpu2)}.` },
         ...(profit ? [{ key: 'U', symbol: '\\text{New units}', label: 'New sales volume', unit: 'count' as const, expected: units2, explain: `${w0(p.units)} × ${1 + p.lift / 100} = ${w0(units2)}.` }] : []),
-        fixedInput(p),
+        fixedInput(p, fixed2),
       ],
       solve: profit ? (v) => v.U * v.C - v.F : (v) => v.F / v.C,
       answer: profit
-        ? { label: 'Revised profit', unit: 'eur', explain: `${w0(units2)} × ${w2(cpu2)} − ${w0(p.fixed)} = ${w0(after)} (was ${w0(before)}).` }
-        : { label: `Revised break-even (${p.unit})`, unit: 'count', explain: `${w0(p.fixed)} ÷ ${w2(cpu2)} = ${w2(be2)} (was ${w2(p.fixed / cpu)}).`, tolerance: 1 },
+        ? { label: 'Revised profit', unit: 'eur', explain: `${w0(units2)} × ${w2(cpu2)} − ${w0(fixed2)} = ${w0(after)} (was ${w0(before)}).` }
+        : { label: `Revised break-even (${p.unit})`, unit: 'count', explain: `${w0(fixed2)} ÷ ${w2(cpu2)} = ${w2(be2)} (was ${w2(p.fixed / cpu)}).`, tolerance: 1 },
       decision: {
         question: 'Go with Theo’s price cut?',
         options: [
@@ -368,7 +371,7 @@ export const cvpWhatIf = defineCalc<WhatIfP>({
         explain: `Profit goes from ${eur(before)} to ${eur(after)}; break-even rises from ${w0(Math.ceil(p.fixed / cpu))} to ${w0(Math.ceil(be2))} ${p.unit}.`,
       },
       chart: chart({ ...p, price: p.price - p.cut, units: Math.round(units2) }),
-      working: [`New CpU = ${w2(p.price - p.cut)} − ${w2(p.vc)} = ${w2(cpu2)}`, `New volume = ${w0(p.units)} × ${w2(1 + p.lift / 100)} = ${w0(units2)}`, `Revised profit = ${w0(units2)} × ${w2(cpu2)} − ${w0(p.fixed)} = ${w0(after)}`, `Revised BEP = ${w0(p.fixed)} ÷ ${w2(cpu2)} = ${w2(be2)}`],
+      working: [`New CpU = ${w2(p.price - p.cut)} − ${w2(p.vc)} = ${w2(cpu2)}`, `New volume = ${w0(p.units)} × ${w2(1 + p.lift / 100)} = ${w0(units2)}`, `Revised profit = ${w0(units2)} × ${w2(cpu2)} − ${w0(fixed2)} = ${w0(after)}`, `Revised BEP = ${w0(fixed2)} ÷ ${w2(cpu2)} = ${w2(be2)}`],
       hints: { formula: 'Fixed costs don’t change. Contribution per unit does.', inputs: 'The whole price cut comes off contribution.', answer: profit ? 'Volume × CpU − fixed.' : 'Fixed ÷ new CpU.', decision: 'Compare old and new profit.' },
       outcomes: {
         yes: { valueDelta: better ? Math.round((after - before) / 10) : -Math.round((before - after) / 10), news: better ? 'The price cut pays off: the shop is busier and profit is up.' : 'The shop is busier, and profit is down.' },

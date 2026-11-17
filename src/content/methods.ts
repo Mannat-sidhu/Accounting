@@ -131,6 +131,8 @@ export const METHODS: Record<string, Method> = Object.fromEntries([
   m('cos-days-wrong', 'Inventory × days ÷ 365', '\\frac{\\text{Inventory} \\times \\text{Days}}{365}'),
   m('max-fee', 'Most we’d pay: the saving', '\\text{Fee must be below } \\text{Rec.} \\times \\text{eligible} \\times \\text{advance} \\times (r_{funds} - r_{facility})'),
   m('max-fee-wrong', 'Fee must be below the amount borrowed', '\\text{Fee} < \\text{Rec.} \\times \\text{eligible} \\times \\text{advance}'),
+  m('debtors-owed', 'Debtors at the month end', '\\text{Debtors} = \\text{this month’s credit sales} + \\text{credit sales from earlier months not yet collected}'),
+  m('debtors-all-credit', 'All credit sales to date', '\\text{Debtors} = \\text{all credit sales so far}'),
   // budgets
   m('receipts', 'Receipts by credit terms', '\\text{Receipts}_{m} = \\sum \\text{share} \\times \\text{Sales}_{m - \\text{lag}}'),
   m('receipts-sales', 'Receipts = this month’s sales', '\\text{Receipts}_{m} = \\text{Sales}_{m}'),

@@ -25,7 +25,7 @@ npm run build    # static site in dist/
 | VI | How many scarves? | 6 CVP | Topic 6 slides, Cottage Industries, past paper Q1 |
 | VII | The Christmas crunch | 7 Budgeting | Topic 7 slides: planning cycle, benefits, setting process, types, the slides' six-month cash budget, behaviour, criticisms, ZBB/ABB/beyond budgeting |
 | VIII | Silk cost more | 8 Variance analysis | Variance slides, the Beltra class question, Week 10 bank (all nine variances, the profit bridge, working backwards, idle time), past paper Q3A |
-| IX | More than money | 11 Non-financial info | **No slides yet**: past paper Q3C; one extra written question for the choose-one Q4 |
+| IX | More than money | 9 Non-financial measures | Lecture 9 slides (limits of financial measures, value drivers, the four perspectives, objectives/measures/goals/initiatives, poor design, good measurement systems, limits), sample exam Q4, past paper Q3C |
 | X | The sustainability report | 12 Sustainability | Placeholder: needs the slides and the Quattrone (2021) reading |
 
 Chapters I–III are marked as refreshers. Every chapter is open from the start; episodes inside a chapter unlock in order. The map's "Start here" button points at Chapter IV.
@@ -96,8 +96,7 @@ What sets the level:
 
 ## To do
 
-- Chapters IX and X: check against the slides when they're added to the folder (X needs the slides and the Quattrone reading).
-- Q4's sustainability option needs Chapter X; until then the written question offers the discretion question or non-financial measurement.
+- Chapter X (sustainability): the folder has no slides and no copy of the Quattrone (2021) reading, so it stays a placeholder. Q4's sustainability option needs it; until then question 4 offers the other written options.
 
 ## The exam format (from the variance slides)
 
@@ -109,6 +108,21 @@ The mock exams follow that format (`src/content/papers.ts`): "A mixed mock" draw
 Mock A, B and C are fixed combinations; every sitting has new numbers, and question 4 asks the player to choose A or B before
 answering (`choice` on `PaperQuestion`; the unchosen option isn't marked). The real Autumn 2025 paper and the cash flow clinic remain.
 The exam day (Friday 11 December, 1–3pm, Blackrock) is the default exam date.
+
+## Mixed reviews, and tests that reach back
+
+Every chapter's test used to cover that chapter only. Now:
+- **Mixed reviews** (Exam page, and a card on each chapter of the map): "Chapters I–N together", built by `reviewTest` in
+  `src/content/papers.ts`. Question titles say nothing about the topic. Each has a **"Which tool?"** round
+  (`src/content/which-tool.ts`: plain questions to sort into the tools met so far), then **cases** that need several chapters
+  (accounts feeding a liquidity decision; ratios read off accounts the player has built; CVP and variances on one cost card;
+  receipts feeding debtors and a written answer), then single-topic questions from across the chapters, weighted to the newest.
+- **Bosses** now end with three parts from earlier chapters, with fresh numbers and no label (`BOSS_MIX` in
+  `src/content/index.ts`).
+- **Mock exams** use the sample papers' shapes: the mixed mock draws three topics, and many questions combine two (CVP then
+  variances; preparing accounts then invoice discounting). Question 4 offers a choice from four written questions
+  (discretion, financial v. non-financial measures, the annual report, the scorecard).
+- Chapter test-outs stay one chapter at a time on purpose: they exist to skip a chapter you know.
 
 ## Questions from the folder
 

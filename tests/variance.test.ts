@@ -85,7 +85,8 @@ describe('the boss and random data', () => {
   it('the scarf maker boss reconciles and its pieces are the ones in the chapter', () => {
     expect(budgetProfit(SCARVES) + ALL_KINDS.reduce((s, k) => s + profitEffect(k, SCARVES), 0)).toBeCloseTo(actualProfit(SCARVES), 6);
     const ids = ACTS[7].boss!.problems.map((p) => p.problem);
-    expect(ids.length).toBe(12);
+    expect(ids.slice(0, 12).filter((id) => /^var-|usage-reasons/.test(id)).length).toBe(12);
+    expect(ids.length).toBe(15); // plus three from earlier chapters
     for (const k of ALL_KINDS) expect(NAMES[k].name.length).toBeGreaterThan(3);
   });
 });

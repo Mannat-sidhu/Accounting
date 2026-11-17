@@ -9,6 +9,8 @@ export const EVERYDAY: Record<ConceptId, string> = {
   qualities: 'A good group-chat summary is on time, honest, easy to read and in the same format as last week. Bad accounts fail the same tests.',
   'limited-company': 'Put your savings in a flat-share bill kitty. If the kitty goes bust, you lose what you put in, not your own wardrobe. That’s limited liability.',
 
+  'annual-report': 'Your end-of-year photo book: a page on how the year went (profit), a page on what you own and owe (balance sheet), a page on where the money moved (cash), and footnotes. Everyone can read it, but it won’t show how you felt.',
+
   // Chapter II
   equation: 'Buy a €1,000 laptop with €600 of your own money and a €400 loan. The laptop (what you own) equals the loan (what you owe) plus your €600 (what’s yours). That’s the whole equation.',
   'asset-test': 'Your phone is an asset: you own it and it helps you. A concert you went to last month is not: the benefit is gone. A friend’s promise to lend you money doesn’t count either.',
@@ -87,6 +89,11 @@ export const EVERYDAY: Record<ConceptId, string> = {
   'variance-causes': 'Cheaper flour might be gritty, so you use more and the cakes take longer. One decision can show up as good news in one variance and bad in two others.',
 
   // Chapter IX
+  'financial-limits': 'Checking only your bank balance tells you whether you ran out of money last month. It can’t tell you that your car is making a strange noise and will cost you next month.',
+  'nonfin-measures': 'A runner’s sleep, resting heart rate and training load don’t show up in the race result, but they predict the next race. Those are the lead indicators.',
+  'bsc-design': 'A fitness plan: the objective (run a 10k), the measure (weekly distance), the goal (30 km a week) and the initiative (join a running club). Each links to the one before.',
+  'pms-features': 'A good scoreboard in a pub quiz is simple, updated as you go, based on questions you can answer, and the same for every team. A bad one is complicated, revealed at the end and set by the quizmaster.',
+  'bsc-limits': 'A fitness tracker counts steps and sleep, but it can’t see your mood, your friends or your motivation, and it can’t tell you which number matters most.',
   'balanced-scorecard': 'A footballer’s season isn’t just goals. Fitness, team spirit and training all decide next season’s goals. The scorecard tracks the stuff that drives results.',
   'staff-and-profit': 'A restaurant’s best chef leaves. Profit is fine this month. Then dishes get worse, regulars drift away, and a few months later the profit falls.',
 };

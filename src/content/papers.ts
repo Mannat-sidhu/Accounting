@@ -5,9 +5,10 @@ import type { Act, CalcProblem, ConceptId, ParamProblem, Problem, StatementProbl
 import { ACTS, CONCEPTS, PROBLEMS, hasParams, problemsFor } from './index';
 import type { FrostP } from './act-4-problems';
 import { OVERLOAD, freshHouse, type FinData } from './act-5-problems';
-import { KNOTTED, varyCvp } from './act-6-problems';
-import { ONESALE, varyData, type VarKind } from './act-8-problems';
-import { varyTrans } from './trans-problems';
+import { KNOTTED, varyCvp, type CvpP } from './act-6-problems';
+import { ONESALE, budgetProfit, cpuOf, varyData, type VarData, type VarKind } from './act-8-problems';
+import { derived, varyTrans } from './trans-problems';
+import { isWhichTool } from './which-tool';
 
 export interface PaperPart {
   /** (A), (B) i, and so on, as printed on the paper. */
@@ -54,21 +55,6 @@ const Q4: PaperQuestion = {
     { label: '(c)', problem: 'mitigants-opinion', marks: 4 },
   ],
 };
-
-/** The written question: two options, answer one. Option B is the non-financial measurement question. */
-const Q4_CHOICE: PaperQuestion[] = [
-  { ...Q4, choice: { group: 'q4', option: 0 }, title: 'Question 4, option A: the directors’ discretion', stem: 'Answer ONE of the two written questions, A or B. (The real paper’s second option is on sustainability, which needs a chapter that isn’t built yet.) ' + Q4.stem.replace(/ \(The paper also[^)]*\)/, '') },
-  {
-    choice: { group: 'q4', option: 1 },
-    title: 'Question 4, option B: measuring more than money',
-    stem: 'Answer ONE of the two written questions, A or B. A fashion house that has always reported profit is thinking about a balanced scorecard.',
-    parts: [
-      { label: '(a)', problem: 'scorecard-sort', marks: 5 },
-      { label: '(b)', problem: 'nonfin-brief', marks: 8 },
-      { label: '(c)', problem: 'staff-brief', marks: 12 },
-    ],
-  },
-];
 
 /** The four parts of a CVP question over one set of numbers. */
 const cvpQuestion = (title: string, stem: string, d: unknown, cut: number, lift: number): PaperQuestion => ({
@@ -217,18 +203,174 @@ const qBudget = (rng: () => number, n: number): PaperQuestion => {
   };
 };
 
+/** The same budget and standard cost card used for CVP and for variances: two chapters in one question. */
+const cvpFromCard = (d: VarData): CvpP => ({
+  product: d.product,
+  unit: 'units',
+  price: d.budgetPrice,
+  vc: d.budgetPrice - cpuOf(d),
+  fixed: d.fixedBudget!,
+  units: d.budgetUnits,
+  period: 'a year',
+  target: Math.max(50000, Math.round((budgetProfit(d) * 1.4) / 10000) * 10000),
+});
+
+const caseCvpVariances = (rng: () => number, n: number): PaperQuestion => {
+  const d = varyData(rng);
+  const c = cvpFromCard(d);
+  const cpu = cpuOf(d);
+  return {
+    title: `Question ${n}: cost–volume–profit and variances`,
+    stem: `A business makes ${d.product}. Its budgeted cost card and the budget for the coming year are given. In the following year it did something different, and the actual figures are given too.`,
+    parts: [
+      { label: '(A) i', problem: 'cvp-be', params: { ...c, mode: 'units' }, marks: 2.5 },
+      { label: '(A) ii', problem: 'cvp-be', params: { ...c, mode: 'value' }, marks: 2.5 },
+      { label: '(B)', problem: 'cvp-mos', params: c, marks: 3 },
+      { label: '(C)', problem: 'cvp-target', params: c, marks: 3 },
+      { label: '(D)', problem: 'cvp-whatif', params: { ...c, cut: Math.max(1, Math.round(cpu * 0.2)), lift: 40, ask: 'profit', extra: Math.round((d.fixedBudget! * 0.06) / 1000) * 1000 }, marks: 5 },
+      { label: '(E) a', problem: 'var-sales', params: { kind: 'sales-price', d }, marks: 3 },
+      { label: '(E) b', problem: 'var-labour', params: { kind: 'lab-rate', d }, marks: 3 },
+      { label: '(E) c', problem: 'var-labour', params: { kind: 'lab-eff', d }, marks: 3 },
+    ],
+  };
+};
+
+/** Sample-style: four variances, a cause for each, and a written part on budget behaviour. */
+const caseVarianceCauses = (rng: () => number, n: number): PaperQuestion => {
+  const d = varyData(rng);
+  const k = (kind: VarKind) => ({ kind, d });
+  return {
+    title: `Question ${n}: standard costs and budgets`,
+    stem: `A business makes ${d.product} with no stocks of materials or finished goods. Its standard costs, its budget and the actual figures for the year are given.`,
+    parts: [
+      { label: '(A) a', problem: 'var-sales', params: k('sales-price'), marks: 3 },
+      { label: '(A) b', problem: 'var-materials', params: k('mat-qty'), marks: 3 },
+      { label: '(A) c', problem: 'var-labour', params: k('lab-rate'), marks: 3 },
+      { label: '(A) d', problem: 'var-sales', params: k('sales-volume'), marks: 3 },
+      { label: '(B)', problem: 'variance-factors-brief', marks: 8 },
+      { label: '(C)', problem: 'use-it-brief', marks: 5 },
+    ],
+  };
+};
+
+/** Preparing accounts from a list, then a liquidity proposal on the trade debtors it produces: two chapters in one question. */
+const caseAccountsLiquidity = (rng: () => number, n: number): PaperQuestion => {
+  const p = varyTrans(rng);
+  const d = derived(p);
+  const eligible = pickOneOf(rng, [80, 90]);
+  const advance = pickOneOf(rng, [70, 80]);
+  const funds = pickOneOf(rng, [8, 9, 10]);
+  const facility = pickOneOf(rng, [2, 3]);
+  const saving = p.debtors * (eligible / 100) * (advance / 100) * ((funds - facility) / 100);
+  const fee = Math.max(500, Math.round((saving * pickOneOf(rng, [0.6, 0.85, 1.3])) / 100) * 100);
+  void d;
+  return {
+    title: `Question ${n}: accounts and cash management`,
+    stem: 'A new business has traded for its first year. Its transactions are listed. A bank has offered it an invoice discounting facility.',
+    parts: [
+      { label: '(A)', problem: 'trans-is', params: p, marks: 8 },
+      { label: '(B)', problem: 'trans-cash', params: p, marks: 3 },
+      { label: '(C)', problem: 'trans-bs', params: p, marks: 8 },
+      { label: '(D)', problem: 'invoice-discounting', params: { receivables: p.debtors, sales: 0, days: 0, eligible, advance, facility, fee, funds, limit: null }, marks: 6 },
+    ],
+  };
+};
+
+/** Ratios read off the accounts of a business whose accounts first have to be built, then liquidity proposals. */
+const caseRatiosFromAccounts = (rng: () => number, n: number): PaperQuestion => {
+  const p = varyTrans(rng);
+  const days = Math.round((p.debtors / p.sales) * 365);
+  const funds = pickOneOf(rng, [8, 9, 10]);
+  return {
+    title: `Question ${n}: reading the accounts`,
+    stem: 'A new business has traded for its first year and a bank is deciding whether to lend to it. Its transactions for the year are listed.',
+    parts: [
+      { label: '(A) a', problem: 'trans-ratios', params: { ...p, ratio: 'current' }, marks: 4 },
+      { label: '(A) b', problem: 'trans-ratios', params: { ...p, ratio: 'gearing' }, marks: 4 },
+      { label: '(A) c', problem: 'trans-ratios', params: { ...p, ratio: 'roce' }, marks: 4 },
+      { label: '(B)', problem: 'ratio-context-brief', marks: 3 },
+      { label: '(C) Proposal 1', problem: 'credit-control', params: { sales: p.sales, daysNow: null, receivables: p.debtors, to: Math.max(10, days - 12), by: null, funds, cost: 5000 + Math.round(rng() * 4) * 2500, name: 'the business' }, marks: 5 },
+      { label: '(C) Proposal 2', problem: 'prompt-discount', params: { sales: p.sales, takeUp: 50, discount: 1, daysNow: days, daysAfter: Math.max(1, Math.min(15, Math.floor(days / 2))), funds, takersOnly: true }, marks: 5 },
+    ],
+  };
+};
+
+/** Receipts over three months, debtors, and two written parts on budgeting. */
+const caseBudgetDebtors = (rng: () => number, n: number): PaperQuestion => {
+  const rs = PROBLEMS['receipts-split'] as CalcProblem;
+  const base = rs.vary(rng) as { sales: number[]; months: string[]; cashPct: number; oneMonthShare: number };
+  return {
+    title: `Question ${n}: cash and budgets`,
+    stem: `A business expects its sales in ${base.months[0]}, ${base.months[1]} and ${base.months[2]} to be ${base.sales.map((x) => '€' + x.toLocaleString('en-GB')).join(', ')} respectively. Part of its sales are for cash and the rest are on credit, collected over the next two months.`,
+    parts: [
+      { label: '(A)', problem: 'receipts-split', params: { ...base, kind: 'receipts' }, marks: 5 },
+      { label: '(B)', problem: 'receipts-split', params: { ...base, kind: 'debtors' }, marks: 4 },
+      { label: '(C)', problem: 'cash-benefits-brief', marks: 8 },
+      { label: '(D)', problem: 'beyond-budgeting-brief', marks: 8 },
+    ],
+  };
+};
+
+function pickOneOf<T>(rng: () => number, list: readonly T[]): T {
+  return list[Math.floor(rng() * list.length)];
+}
+
 const TOPIC_BUILDERS: Record<Topic, (rng: () => number, n: number) => PaperQuestion> = {
-  accounts: qAccounts,
-  ratios: qRatios,
-  cvp: qCvp,
-  budget: qBudget,
-  variance: qVarianceFull,
+  accounts: (rng, n) => (rng() < 0.75 ? caseAccountsLiquidity(rng, n) : qAccounts(rng, n)),
+  ratios: (rng, n) => (rng() < 0.6 ? qRatios(rng, n) : caseRatiosFromAccounts(rng, n)),
+  cvp: (rng, n) => (rng() < 0.5 ? qCvp(rng, n) : caseCvpVariances(rng, n)),
+  budget: (rng, n) => (rng() < 0.5 ? qBudget(rng, n) : caseBudgetDebtors(rng, n)),
+  variance: (rng, n) => (rng() < 0.5 ? qVarianceFull(rng, n) : caseVarianceCauses(rng, n)),
+};
+
+/** The written question: two options drawn from the ones the sample papers use. Answer one. */
+const Q4_POOL: { title: string; stem: string; parts: PaperPart[] }[] = [
+  { title: 'the directors’ discretion', stem: Q4.stem.replace(/ \(The paper also[^)]*\)/, ''), parts: Q4.parts },
+  {
+    title: 'financial and non-financial measures',
+    stem: '“Organisations that monitor purely financial data will always be reactive rather than proactive.” A ferry operator is considering how it should measure itself.',
+    parts: [
+      { label: '(a)', problem: 'fin-nonfin-brief', marks: 10 },
+      { label: '(b)', problem: 'bsc-design-brief', marks: 15 },
+    ],
+  },
+  {
+    title: 'the annual report',
+    stem: '“The annual report is the key governance document that allows an assessment of the actions of the management of an organisation.”',
+    parts: [
+      { label: '(a)', problem: 'fs-components-brief', marks: 10 },
+      { label: '(b)', problem: 'fs-effectiveness-brief', marks: 15 },
+    ],
+  },
+  {
+    title: 'measuring more than money',
+    stem: 'A fashion house that has always reported profit is thinking about a balanced scorecard.',
+    parts: [
+      { label: '(a)', problem: 'scorecard-sort', marks: 5 },
+      { label: '(b)', problem: 'nonfin-brief', marks: 8 },
+      { label: '(c)', problem: 'staff-brief', marks: 12 },
+    ],
+  },
+];
+
+const q4Choice = (rng: () => number): PaperQuestion[] => {
+  const pool = [...Q4_POOL];
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  return pool.slice(0, 2).map((q, option) => ({
+    choice: { group: 'q4', option },
+    title: `Question 4, option ${option ? 'B' : 'A'}: ${q.title}`,
+    stem: `Answer ONE of the two written questions, A or B. (The real paper’s sustainability option needs a chapter that isn’t built yet.) ${q.stem}`,
+    parts: q.parts,
+  }));
 };
 
 /** Three computational questions, one written question with a choice of two. The topics are drawn from the syllabus. */
 const sitting = (id: string, title: string, topics: Topic[]) => (seed: number): Paper => {
   const rng = mulberry32(seed);
-  return { id, title, minutes: 120, questions: [...topics.map((t, i) => TOPIC_BUILDERS[t](rng, i + 1)), ...Q4_CHOICE] };
+  return { id, title, minutes: 120, questions: [...topics.map((t, i) => TOPIC_BUILDERS[t](rng, i + 1)), ...q4Choice(rng)] };
 };
 
 const ALL_TOPICS: Topic[] = ['accounts', 'ratios', 'cvp', 'budget', 'variance'];
@@ -250,7 +392,7 @@ const fresh = (seed: number): Paper => {
     id: 'fresh',
     title: 'A fresh paper: new numbers',
     minutes: 120,
-    questions: [qCvp(rng, 1), qRatios(rng, 2), qVarianceLite(rng, 3), ...Q4_CHOICE],
+    questions: [qCvp(rng, 1), qRatios(rng, 2), qVarianceLite(rng, 3), ...q4Choice(rng)],
   };
 };
 
@@ -326,8 +468,8 @@ export function chapterTest(act: Act, seed: number): Paper {
   const questions: PaperQuestion[] = [];
   let minutes = 0;
   for (const concept of act.concepts) {
-    const own = Object.values(PROBLEMS).filter((p) => p.concept === concept && !used.has(p.id));
-    const pool = own.length ? own : problemsFor(concept).filter((p) => !used.has(p.id));
+    const own = Object.values(PROBLEMS).filter((p) => p.concept === concept && !used.has(p.id) && !isWhichTool(p.id));
+    const pool = own.length ? own : problemsFor(concept).filter((p) => !used.has(p.id) && !isWhichTool(p.id));
     if (!pool.length) continue;
     // Calculations and statements first: they are the better test of whether it has really sunk in.
     const worked = pool.filter((p) => hasParams(p));
@@ -344,10 +486,105 @@ export function chapterTest(act: Act, seed: number): Paper {
   return { id: `chapter-${act.number}`, title: `Chapter ${act.numeral} test-out: ${act.title}`, minutes: Math.max(10, Math.ceil(minutes * 1.1)), questions };
 }
 
+// ---------------------------------------------------------------- cumulative reviews
+
+export const REVIEW_PREFIX = 'review-';
+
+const ROMAN = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
+
+/** Questions that need more than one chapter, and the first chapter by which a player has met everything they use. */
+const CASES: { min: number; build: (rng: () => number, n: number) => PaperQuestion }[] = [
+  { min: 4, build: qAccounts },
+  { min: 5, build: caseAccountsLiquidity },
+  { min: 5, build: caseRatiosFromAccounts },
+  { min: 7, build: caseBudgetDebtors },
+  { min: 8, build: caseCvpVariances },
+  { min: 8, build: caseVarianceCauses },
+];
+
+const shuffled = <T,>(rng: () => number, list: readonly T[]): T[] => {
+  const out = [...list];
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+};
+
+/** A problem testing the concept, with fresh numbers if it can have them. */
+function drawProblem(concept: ConceptId, used: Set<string>, rng: () => number): { p: Problem; params?: unknown } | null {
+  const own = Object.values(PROBLEMS).filter((p) => p.concept === concept && !used.has(p.id) && !isWhichTool(p.id));
+  const pool = own.length ? own : problemsFor(concept).filter((p) => !used.has(p.id) && !isWhichTool(p.id));
+  if (!pool.length) return null;
+  const worked = pool.filter((p) => hasParams(p));
+  const from = worked.length ? worked : pool;
+  const p = from[Math.floor(rng() * from.length)];
+  used.add(p.id);
+  return { p, params: hasParams(p) ? p.vary(rng) : undefined };
+}
+
+/**
+ * A review of chapters I to `upTo` together. Question titles say nothing about the topic: a "which tool?" round, then
+ * questions that mix chapters (accounts feeding a liquidity decision, CVP and variances on one cost card, receipts
+ * feeding debtors), then single-topic questions drawn from across the chapters, weighted to the latest.
+ */
+export function reviewTest(upTo: number, seed: number): Paper {
+  const rng = mulberry32(seed);
+  const acts = ACTS.filter((a) => a.number <= upTo && !a.draft);
+  const questions: PaperQuestion[] = [];
+  let minutes = 0;
+  const add = (q: PaperQuestion, mins: number) => {
+    questions.push({ ...q, title: `Question ${questions.length + 1}` });
+    minutes += mins;
+  };
+  const used = new Set<string>();
+
+  if (upTo >= 2) {
+    const id = `which-tool-${upTo}`;
+    used.add(id);
+    add({ title: '', stem: 'Read each question and decide which tool it needs. There’s no hint about which chapter it comes from.', parts: [{ label: '', problem: id, marks: 8 }] }, 4);
+  }
+
+  const nCases = upTo >= 8 ? 2 : upTo >= 4 ? 1 : 0;
+  const avail = shuffled(rng, CASES.filter((c) => c.min <= upTo)).sort((a, b) => b.min - a.min);
+  for (const c of avail.slice(0, nCases)) {
+    const q = c.build(rng, 0);
+    add(q, q.parts.reduce((t, x) => t + x.marks, 0));
+  }
+
+  const target = Math.min(upTo + 1, upTo >= 8 ? 4 : 6);
+  const order = [upTo, upTo, ...shuffled(rng, acts.filter((a) => a.number < upTo).map((a) => a.number))].slice(0, target);
+  const taken: Record<number, ConceptId[]> = {};
+  for (const num of order) {
+    const act = acts.find((a) => a.number === num)!;
+    const concepts = shuffled(rng, act.concepts.filter((c) => !(taken[num] ?? []).includes(c)));
+    let drawn: { p: Problem; params?: unknown } | null = null;
+    let concept: ConceptId | null = null;
+    for (const c of concepts) {
+      drawn = drawProblem(c, used, rng);
+      if (drawn) {
+        concept = c;
+        break;
+      }
+    }
+    if (!drawn || !concept) continue;
+    (taken[num] ??= []).push(concept);
+    minutes += KIND_MINUTES[drawn.p.kind] * 1.1;
+    questions.push({ title: `Question ${questions.length + 1}`, stem: '', parts: [{ label: '', problem: drawn.p.id, params: drawn.params, marks: KIND_MARKS[drawn.p.kind], concept }] });
+  }
+  return { id: `${REVIEW_PREFIX}${upTo}`, title: `Review: Chapters I${upTo > 1 ? `–${ROMAN[upTo]}` : ''} together`, minutes: Math.max(15, Math.ceil(minutes)), questions };
+}
+
 export const CHAPTER_PREFIX = 'chapter-';
 
 /** The kind behind a paper id, including the chapter tests, which are built on the fly. */
 export function paperKind(id: string): PaperKind | undefined {
+  if (id.startsWith(REVIEW_PREFIX)) {
+    const n = Number(id.slice(REVIEW_PREFIX.length));
+    if (!ACTS[n - 1] || ACTS[n - 1].draft) return undefined;
+    const probe = reviewTest(n, 1);
+    return { id, title: probe.title, blurb: '', minutes: probe.minutes, fixed: false, build: (seed) => reviewTest(n, seed) };
+  }
   if (!id.startsWith(CHAPTER_PREFIX)) return PAPER_KINDS.find((k) => k.id === id);
   const act = ACTS[Number(id.slice(CHAPTER_PREFIX.length)) - 1];
   if (!act) return undefined;

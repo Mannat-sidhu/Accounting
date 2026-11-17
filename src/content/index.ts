@@ -1,5 +1,6 @@
 // Registries the engine reads. Adding an act means adding its files here, nothing else.
-import type { CalcProblem, Concept, ConceptId, ParamProblem, Problem, Session } from '../engine/types';
+import { mulberry32 } from '../engine/rng';
+import type { Act, CalcProblem, Concept, ConceptId, ParamProblem, Problem, Session } from '../engine/types';
 import { ACT1_CONCEPTS } from './act-1-concepts';
 import { ACT1_PROBLEMS } from './act-1-problems';
 import { ACT2_CONCEPTS } from './act-2-concepts';
@@ -19,9 +20,10 @@ import { ACT8_PROBLEMS } from './act-8-problems';
 import { ACT9_CONCEPTS } from './act-9-concepts';
 import { ACT9_PROBLEMS } from './act-9-problems';
 import { BANK_PROBLEMS } from './bank-problems';
-import { ACTS } from './acts';
-
-export { ACTS } from './acts';
+import { WRITTEN_PROBLEMS } from './written-problems';
+import { CROSS_PROBLEMS } from './cross-problems';
+import { WHICH_TOOL_PROBLEMS } from './which-tool';
+import { ACTS as RAW_ACTS } from './acts';
 export { CHARACTERS, FORMULA_SHEET, METHODS } from './methods';
 
 export const CONCEPTS: Record<ConceptId, Concept> = Object.fromEntries(
@@ -29,8 +31,43 @@ export const CONCEPTS: Record<ConceptId, Concept> = Object.fromEntries(
 );
 
 export const PROBLEMS: Record<string, Problem> = Object.fromEntries(
-  [ACT1_PROBLEMS, ACT2_PROBLEMS, ACT3_PROBLEMS, ACT4_PROBLEMS, ACT5_PROBLEMS, ACT6_PROBLEMS, ACT7_PROBLEMS, ACT8_PROBLEMS, ACT9_PROBLEMS, BANK_PROBLEMS].flat().map((p) => [p.id, p]),
+  [ACT1_PROBLEMS, ACT2_PROBLEMS, ACT3_PROBLEMS, ACT4_PROBLEMS, ACT5_PROBLEMS, ACT6_PROBLEMS, ACT7_PROBLEMS, ACT8_PROBLEMS, ACT9_PROBLEMS, BANK_PROBLEMS, WRITTEN_PROBLEMS, CROSS_PROBLEMS, WHICH_TOOL_PROBLEMS].flat().map((p) => [p.id, p]),
 );
+
+export const isCalc = (p: Problem): p is CalcProblem => p.kind === 'calc';
+export const hasParams = (p: Problem): p is ParamProblem => p.kind === 'calc' || p.kind === 'statement' || p.kind === 'grid';
+
+/**
+ * Each boss round ends with a few parts from earlier chapters, with fresh numbers and no label saying which chapter
+ * they belong to, so a boss tests the new chapter and whether the old ones have stuck.
+ */
+const BOSS_MIX: Record<number, string[]> = {
+  4: ['cos', 'trans-cash'],
+  5: ['cfo-indirect', 'cos'],
+  6: ['ratio-efficiency', 'credit-control', 'trans-cash'],
+  7: ['cvp-be', 'credit-control', 'cfo-indirect'],
+  8: ['receipts-split', 'cvp-cmr', 'trans-ratios'],
+  9: ['var-sales', 'cvp-mos', 'ratio-gearing'],
+};
+
+function withMixedBoss(act: Act): Act {
+  const mix = BOSS_MIX[act.number];
+  if (!act.boss || !mix) return act;
+  const extra = mix.map((id, i) => {
+    const p = PROBLEMS[id];
+    return { problem: id, params: hasParams(p) ? p.vary(mulberry32(act.number * 1000 + i + 1)) : undefined };
+  });
+  return {
+    ...act,
+    boss: {
+      ...act.boss,
+      intro: [...act.boss.intro, { who: 'margaux', text: `The last ${extra.length} parts reach back to earlier chapters. They won’t say which. Work out the tool first.` }],
+      problems: [...act.boss.problems, ...extra],
+    },
+  };
+}
+
+export const ACTS: Act[] = RAW_ACTS.map(withMixedBoss);
 
 export const ALL_CONCEPT_IDS: ConceptId[] = ACTS.flatMap((a) => a.concepts);
 
@@ -51,5 +88,4 @@ export function findSession(id: string): { session: Session; act: (typeof ACTS)[
   return null;
 }
 
-export const isCalc = (p: Problem): p is CalcProblem => p.kind === 'calc';
-export const hasParams = (p: Problem): p is ParamProblem => p.kind === 'calc' || p.kind === 'statement' || p.kind === 'grid';
+

@@ -4,7 +4,7 @@
 import { cleanup, fireEvent, render } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { METHODS, PROBLEMS, hasParams } from '../src/content';
-import { PAPER_KINDS } from '../src/content/papers';
+import { PAPER_KINDS, reviewTest } from '../src/content/papers';
 import { expectedValues, markWorksheet, sectionSums, truePlacements } from '../src/engine/grading';
 import { mulberry32 } from '../src/engine/rng';
 import type { CalcProblem, GridProblem, Problem, StatementProblem, Tier } from '../src/engine/types';
@@ -71,6 +71,22 @@ describe('paper parts mount under paper conditions', () => {
           expect(container.textContent).not.toMatch(/NaN|undefined|Infinity/);
           unmount();
         }
+    });
+  }
+});
+
+describe('cumulative reviews mount under paper conditions', () => {
+  for (const n of [2, 3, 5, 7, 8, 9]) {
+    it(`review of chapters I–${n}: every part, three seeds`, () => {
+      for (const seed of [3, 4, 5]) {
+        const paper = reviewTest(n, seed);
+        for (const q of paper.questions)
+          for (const part of q.parts) {
+            const { container, unmount } = mount(PROBLEMS[part.problem], part.params, 'exam', { noCall: true, silent: true });
+            expect(container.textContent).not.toMatch(/NaN|undefined|Infinity/);
+            unmount();
+          }
+      }
     });
   }
 });

@@ -637,6 +637,8 @@ interface PdP {
   daysNow: number;
   daysAfter: number;
   funds: number;
+  /** True if only the customers who take the discount pay faster; the rest carry on as before. */
+  takersOnly?: boolean;
 }
 
 export const promptDiscountCalc = defineCalc<PdP>({
@@ -648,15 +650,19 @@ export const promptDiscountCalc = defineCalc<PdP>({
   base: { sales: 8000000, takeUp: 50, discount: 2, daysNow: 70, daysAfter: 45, funds: 8 },
   vary: (rng) => {
     const daysNow = pickInt(rng, 50, 100, 5);
-    return { sales: pickInt(rng, 500000, 9000000, 50000), takeUp: pickInt(rng, 20, 70, 10), discount: pickOne(rng, [1, 1.5, 2, 2.5]), daysNow, daysAfter: daysNow - pickInt(rng, 10, 35, 5), funds: pickInt(rng, 5, 12) };
+    return { sales: pickInt(rng, 500000, 9000000, 50000), takeUp: pickInt(rng, 20, 70, 10), discount: pickOne(rng, [1, 1.5, 2, 2.5]), daysNow, daysAfter: daysNow - pickInt(rng, 10, 35, 5), funds: pickInt(rng, 5, 12), takersOnly: rng() < 0.5 };
   },
-  build: ({ sales, takeUp, discount, daysNow, daysAfter, funds }) => {
-    const r = A.promptDiscount(sales, takeUp, discount, daysNow - daysAfter, funds);
+  build: ({ sales, takeUp, discount, daysNow, daysAfter, funds, takersOnly }) => {
+    // If only the customers who take the discount pay faster, only their sales release cash.
+    const faster = takersOnly ? (sales * takeUp) / 100 : sales;
+    const cost0 = A.promptDiscount(sales, takeUp, discount, daysNow - daysAfter, funds).cost;
+    const saving0 = A.financingSaving(A.releasedByDays(faster, daysNow - daysAfter), funds);
+    const r = { cost: cost0, saving: saving0, net: saving0 - cost0 };
     const good = r.net > 0;
     return {
       prompt: [
         { who: 'theo', mood: 'happy', text: `Easy fix: give boutiques a ${discount}% discount if they pay early! I reckon ${takeUp}% of our sales would take it.` },
-        { who: 'margaux', text: `Credit sales ${eur(sales)}; debtor days ${daysNow}, falling to ${daysAfter} if Theo’s right. Our cost of funds is ${funds}%.` },
+        { who: 'margaux', text: takersOnly ? `Credit sales ${eur(sales)}; debtor days ${daysNow}. The customers who take the discount would pay within ${daysAfter} days; everyone else carries on as now. Our cost of funds is ${funds}%.` : `Credit sales ${eur(sales)}; debtor days ${daysNow}, falling to ${daysAfter} if Theo’s right. Our cost of funds is ${funds}%.` },
       ],
       ask: 'What’s the net effect on profit each year?',
       formula: {
@@ -670,9 +676,10 @@ export const promptDiscountCalc = defineCalc<PdP>({
         { key: 'T', symbol: '\\text{Take-up}', label: 'Share of sales taking the discount', unit: 'pct', expected: takeUp, explain: `${takeUp}%.` },
         { key: 'K', symbol: '\\text{Discount}', label: 'Discount', unit: 'pct', expected: discount, explain: `${discount}%.` },
         { key: 'D', symbol: '\\text{Days saved}', label: 'Debtor days saved', unit: 'days', expected: daysNow - daysAfter, explain: `${daysNow} − ${daysAfter} = ${daysNow - daysAfter}.` },
+        { key: 'B', symbol: '\\text{Faster}', label: 'Sales that are paid faster', unit: 'eur', expected: faster, explain: takersOnly ? `Only the customers taking the discount: ${takeUp}% × ${w0(sales)} = ${w0(faster)}.` : `All credit sales: ${w0(sales)}.`, given: takersOnly ? false : undefined },
         { key: 'R', symbol: 'r', label: 'Cost of funds', unit: 'pct', expected: funds, explain: `${funds}%.` },
       ],
-      solve: (v) => (v.D / 365) * v.S * (v.R / 100) - v.S * (v.T / 100) * (v.K / 100),
+      solve: (v) => (v.D / 365) * v.B * (v.R / 100) - v.S * (v.T / 100) * (v.K / 100),
       answer: { label: 'Net effect on profit (negative for a cost)', unit: 'eur', explain: `Saving ${w2(r.saving)} − discount cost ${w2(r.cost)} = ${w2(r.net)}.` },
       decision: {
         question: 'Offer the discount?',
@@ -686,7 +693,7 @@ export const promptDiscountCalc = defineCalc<PdP>({
         alsoAccept: liqAlt(good),
         explain: good ? `Net saving ${eur(r.net, 2)} a year.` : `Net cost ${eur(-r.net, 2)} a year. Discounts are an expensive way to borrow.`,
       },
-      working: [`Cost = ${discount}% × ${takeUp}% × ${w0(sales)} = ${w2(r.cost)}`, `Saving = ${daysNow - daysAfter} ÷ 365 × ${w0(sales)} × ${funds}% = ${w2(r.saving)}`, `Net = ${w2(r.net)}`],
+      working: [`Cost = ${discount}% × ${takeUp}% × ${w0(sales)} = ${w2(r.cost)}`, `Saving = ${daysNow - daysAfter} ÷ 365 × ${w0(faster)} × ${funds}% = ${w2(r.saving)}`, `Net = ${w2(r.net)}`],
       hints: { formula: 'Two parts: what we give away, and what we save.', inputs: 'The discount applies only to the sales that take it.', answer: 'Saving − cost.', decision: 'Is it positive?' },
       outcomes: {
         yes: { valueDelta: good ? 1500 : -2000, news: good ? 'Boutiques pay early and the overdraft shrinks.' : 'Everyone takes the discount. Margin drops more than interest does.' },

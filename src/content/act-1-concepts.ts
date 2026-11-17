@@ -59,4 +59,20 @@ export const ACT1_CONCEPTS: Concept[] = [
       traps: ['Directors run the company for the shareholders, who are often different people. That separation of ownership and control is why accounts and audits matter.'],
     },
   }),
+  c({
+    id: 'annual-report',
+    name: 'The annual report: what’s in it',
+    summary: 'The income statement, balance sheet, cash flow statement and notes, with an audit opinion. Effective because of common standards and audit; limited by discretion and by what money can’t measure.',
+    lesson: {
+      plain: [
+        'The annual report is the key governance document: it’s how owners and outsiders judge what the managers have done.',
+        'Its core is four things. The income statement shows performance over the period: revenues and expenses, ending in profit. The balance sheet shows what the business owns, owes and is worth at the end of the period. The cash flow statement shows where cash came from and went: operating, investing and financing. The notes add detail on the items in the three statements, including the accounting policies.',
+        'It comes with the auditor’s opinion on whether the statements are true and fair.',
+        'It works as a means of assessment because common accounting and reporting standards let an informed reader compare businesses, because it is usually audited, and because the results are what stakeholders look at first.',
+        'It falls short because discretion remains (depreciation, provisions, contingent liabilities), because controls have failed before, and because it leaves out non-financial performance: customers, staff, ethics and sustainability.',
+        'A good answer ends with a conclusion: reliable for what it measures, but not the whole picture.',
+      ],
+      traps: ['Describe each statement’s purpose, not just its name.', 'Say both what the report does well and where it falls short, then give your own view.'],
+    },
+  }),
 ];
