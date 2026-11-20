@@ -94,6 +94,41 @@ What sets the level:
 - Liquidity management follows the Week 5 answers. Saving = days saved ÷ 365 × credit sales × cost of funds. Invoice discounting saving = amount borrowed × (cost of funds − facility rate), less the fee.
 - Cash flow uses the indirect method from operating profit. Interest and dividends: the class example puts interest in financing, while the Frozen solution puts interest, tax and dividends in operating. Both are accepted where IFRS allows the choice.
 
+## One company, one year (linked books)
+
+Chapters II to V now follow one year of Atelier Noor itself, instead of separate case companies.
+
+- **The company file.** `src/engine/books.ts` holds the double-entry engine. `src/content/books.ts` holds the year: an opening balance sheet and 18 dated events, each with a one-line real-world reason.
+  - The income statement, both balance sheets, the cash flow and the ratios are all worked out from that one list.
+  - So a figure found in one chapter comes back in the next, and it has to agree.
+  - `tests/books.test.ts` checks that the books balance after every event, that profit reaches retained earnings, and that cash-flow closing cash equals balance-sheet cash. It does this for 300 random years and months.
+- **The chapters.**
+  - Ch II builds the opening balance sheet.
+  - Ch III works out cost of sales, the commission accrual and depreciation, then the year's income statement. It follows the events into the closing balance sheet, then does a single month.
+  - Ch IV covers cash collected, free cash flow, profit-to-cash, every jar, then the full cash flow.
+  - Ch V does the ratios on the same figures.
+  - The Ch IV and V boss levels use the following year (fresh numbers, compared with this year).
+- **The books panel.** It sits beside every episode (or behind "Open the books" on a phone). Each statement fills in once it's built, and the links between them appear as soon as both ends exist.
+- **Practice by period.** `month-pl` and `month-cash` give a fresh month, and replays of the year rounds give a fresh year. `books-links` sorts each event by what it moves.
+- **The classic version.** The game before this change is git tag `v1`. The deploy builds it into `/v1/` (linked from Settings). The new version saves under `save/v2` and copies a `save/v1` save across once, without changing it.
+- **Real company check-ins.** `src/content/real-companies.ts` has five rounds. Each one repeats a move just made on Atelier Noor, this time on a real listed company's audited figures. The source sits under each data table, and the figures are fixed, so a replay shows the same accounts.
+
+  | Check-in | Episode | Company and figures | Answer |
+  |---|---|---|---|
+  | Gross margin | III · Did we make a profit? | B&M, 52 weeks to 28 Mar 2026 (£m): revenue 5,775, cost of sales 3,670 | 36.45% (ours: 40%) |
+  | Free cash flow | IV · Three buckets | Games Workshop, 52 weeks to 31 May 2026 (£m): operating cash 267.7 less capex 32.0 + 0.4 + 17.0 | 218.3, covering 160.1 of dividends |
+  | Profit to cash | IV · From profit to cash | tonies, 2025 (€'000): EBITDA 48,305; receivables (29,144); inventories (68,409); payables 40,473; other 18,575; tax (3,927) | 5,873 (published 5,874, rounded), on profit of 13,114 |
+  | ROCE | V · Aoife's checklist | Games Workshop (£m): operating profit 275.0 ÷ (equity 335.3 + non-current liabilities 52.5) | 70.9% (ours: 15.3%) |
+  | Inventory days | V · Debtor days | B&M (£m): inventory 883 → 849, cost of sales 3,670 | 86.1 days (ours: 73), and a fall that released 38 of cash |
+
+  Sources:
+  - Games Workshop Group PLC, results for the 52 weeks ended 31 May 2026 (the results announcement linked from investor.games-workshop.com).
+  - B&M European Value Retail, Annual Report and Accounts 2026 (bandmretail.com).
+  - tonies SE, Annual Report 2025 including the consolidated financial statements (ir.tonies.com).
+
+  `tests/real.test.ts` pins every answer and checks that each source is shown.
+- **Still to come.** Chapters VI to IX, the mocks and the reviews move onto the same company next.
+
 ## To do
 
 - Chapter X (sustainability): the folder has no slides and no copy of the Quattrone (2021) reading, so it stays a placeholder. Q4's sustainability option needs it; until then question 4 offers the other written options.

@@ -18,7 +18,7 @@ export const STAGE_LABEL: Record<Stage, string> = {
   common: 'Common knowledge',
 };
 
-function Overlay({ onClose, center, label, children }: { onClose: () => void; center?: boolean; label: string; children: ReactNode }) {
+export function Overlay({ onClose, center, label, children }: { onClose: () => void; center?: boolean; label: string; children: ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const prev = document.activeElement as HTMLElement | null;

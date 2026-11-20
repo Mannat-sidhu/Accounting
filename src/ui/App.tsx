@@ -1,5 +1,6 @@
 // App shell: status bar, news line, and the screens.
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { chStyle } from './theme';
 import { ACTS, ALL_CONCEPT_IDS, CHARACTERS, CONCEPTS, findSession } from '../content';
 import { chapterTest, reviewTest } from '../content/papers';
 import { eur, eurSigned } from '../engine/format';
@@ -200,7 +201,7 @@ function ActMap() {
           const bossOpen = open && act.boss && done === total;
           if (!open)
             return (
-              <article key={act.number} className="chapter locked">
+              <article key={act.number} className="chapter locked" style={chStyle(act.number)}>
                 <span className="chapter-n">{act.numeral}</span>
                 <div>
                   <h2>{act.title}</h2>
@@ -210,7 +211,7 @@ function ActMap() {
               </article>
             );
           return (
-            <article key={act.number} className="chapter open">
+            <article key={act.number} className="chapter open" style={chStyle(act.number)}>
               <div className="chapter-head">
                 <span className="chapter-n">{act.numeral}</span>
                 <div>
@@ -462,6 +463,14 @@ function Settings() {
           {msg}
         </p>
       )}
+
+      <h2 style={{ fontSize: 22, marginTop: 34 }}>The classic version</h2>
+      <p className="muted" style={{ maxWidth: 560 }}>
+        The game as it was before the linked books, with its separate case companies. It keeps its own progress, so nothing you do there changes this version.
+      </p>
+      <a className="btn ghost" href="./v1/">
+        Open the classic version
+      </a>
 
       <h2 style={{ fontSize: 22, marginTop: 34 }}>Start again</h2>
       <p className="muted">Wipes all progress on this device. Export first if you might want it back.</p>

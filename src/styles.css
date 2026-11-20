@@ -3,68 +3,129 @@
 @import '@fontsource-variable/inter';
 
 :root {
-  --paper: #f6f3ee;
-  --paper-raised: #fbf9f6;
-  --ink: #1b1918;
-  --ink-2: #57524c;
-  --ink-3: #8a837a;
-  --rule: #ddd6cb;
-  --rule-strong: #b9b0a3;
-  --accent: #6b1e2a;
-  --accent-ink: #fbf9f6;
-  --accent-soft: rgba(107, 30, 42, 0.07);
-  --good: #2f6140;
-  --good-soft: rgba(47, 97, 64, 0.09);
-  --bad: #a3321f;
-  --bad-soft: rgba(163, 50, 31, 0.08);
-  --in: #2f6140;
-  --out: #6b1e2a;
+  --paper: #fbf7f0;
+  --paper-raised: #fffdf9;
+  --ink: #1f1b2e;
+  --ink-2: #4e4a5e;
+  --ink-3: #847f93;
+  --rule: #e8e1d4;
+  --rule-strong: #c9bfae;
+  --accent: #b4234e;
+  --accent-ink: #ffffff;
+  --accent-soft: rgba(180, 35, 78, 0.1);
+  --good: #0c7d60;
+  --good-soft: rgba(15, 138, 106, 0.12);
+  --bad: #c73a25;
+  --bad-soft: rgba(214, 69, 47, 0.1);
+  --in: #0c7d60;
+  --out: #c73a25;
+  --gold: #c38a06;
+  --gold-soft: rgba(212, 160, 23, 0.16);
+  /* One jewel colour per chapter: fills, borders and badges. Text uses a deeper mix (see --ch-text). */
+  --ch-1: #0f8a6a;
+  --ch-2: #2457c5;
+  --ch-3: #e09a10;
+  --ch-4: #e5533d;
+  --ch-5: #7b4fd0;
+  --ch-6: #0e8fa3;
+  --ch-7: #c2307a;
+  --ch-8: #d46b08;
+  --ch-9: #5a8f1f;
+  --ch-10: #b3243b;
+  /* One colour per statement, everywhere it appears. */
+  --st-pl: #e09a10;
+  --st-sfp: #2457c5;
+  --st-cf: #0f8a6a;
+  --st-ratio: #7b4fd0;
+  --shadow: 0 1px 2px rgba(31, 27, 46, 0.06), 0 8px 24px rgba(31, 27, 46, 0.06);
   --serif: 'Newsreader Variable', 'Iowan Old Style', Georgia, serif;
   --sans: 'Inter Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --radius: 3px;
   --gutter: 16px;
+  /* The current chapter's colour; set per chapter card, episode and boss. */
+  --ch: var(--accent);
   color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
-    --paper: #141211;
-    --paper-raised: #1c1a18;
-    --ink: #ece6dc;
-    --ink-2: #aaa298;
-    --ink-3: #7b746b;
-    --rule: #33302c;
-    --rule-strong: #514b44;
-    --accent: #cf7f8b;
-    --accent-ink: #141211;
-    --accent-soft: rgba(207, 127, 139, 0.1);
-    --good: #8cc29b;
-    --good-soft: rgba(140, 194, 155, 0.1);
-    --bad: #ec9a86;
-    --bad-soft: rgba(236, 154, 134, 0.1);
-    --in: #8cc29b;
-    --out: #cf7f8b;
+    --paper: #13111c;
+    --paper-raised: #1c1928;
+    --ink: #f1ecf7;
+    --ink-2: #b7b0c8;
+    --ink-3: #847d96;
+    --rule: #2e2a3d;
+    --rule-strong: #4a4560;
+    --accent: #f0628f;
+    --accent-ink: #13111c;
+    --accent-soft: rgba(240, 98, 143, 0.12);
+    --good: #3fd2a6;
+    --good-soft: rgba(63, 210, 166, 0.12);
+    --bad: #ff7a63;
+    --bad-soft: rgba(255, 122, 99, 0.12);
+    --in: #3fd2a6;
+    --out: #ff7a63;
+    --gold: #f2c14e;
+    --gold-soft: rgba(242, 193, 78, 0.14);
+    --ch-1: #34c79e;
+    --ch-2: #6f96f2;
+    --ch-3: #f5b73b;
+    --ch-4: #ff7a63;
+    --ch-5: #a88bf0;
+    --ch-6: #3cc3d6;
+    --ch-7: #ec6aae;
+    --ch-8: #f59a42;
+    --ch-9: #94c95a;
+    --ch-10: #f06b80;
+    --st-pl: #f5b73b;
+    --st-sfp: #6f96f2;
+    --st-cf: #34c79e;
+    --st-ratio: #a88bf0;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.25);
     color-scheme: dark;
   }
 }
 :root[data-theme='dark'] {
-  --paper: #141211;
-  --paper-raised: #1c1a18;
-  --ink: #ece6dc;
-  --ink-2: #aaa298;
-  --ink-3: #7b746b;
-  --rule: #33302c;
-  --rule-strong: #514b44;
-  --accent: #cf7f8b;
-  --accent-ink: #141211;
-  --accent-soft: rgba(207, 127, 139, 0.1);
-  --good: #8cc29b;
-  --good-soft: rgba(140, 194, 155, 0.1);
-  --bad: #ec9a86;
-  --bad-soft: rgba(236, 154, 134, 0.1);
-  --in: #8cc29b;
-  --out: #cf7f8b;
+  --paper: #13111c;
+  --paper-raised: #1c1928;
+  --ink: #f1ecf7;
+  --ink-2: #b7b0c8;
+  --ink-3: #847d96;
+  --rule: #2e2a3d;
+  --rule-strong: #4a4560;
+  --accent: #f0628f;
+  --accent-ink: #13111c;
+  --accent-soft: rgba(240, 98, 143, 0.12);
+  --good: #3fd2a6;
+  --good-soft: rgba(63, 210, 166, 0.12);
+  --bad: #ff7a63;
+  --bad-soft: rgba(255, 122, 99, 0.12);
+  --in: #3fd2a6;
+  --out: #ff7a63;
+  --gold: #f2c14e;
+  --gold-soft: rgba(242, 193, 78, 0.14);
+  --ch-1: #34c79e;
+  --ch-2: #6f96f2;
+  --ch-3: #f5b73b;
+  --ch-4: #ff7a63;
+  --ch-5: #a88bf0;
+  --ch-6: #3cc3d6;
+  --ch-7: #ec6aae;
+  --ch-8: #f59a42;
+  --ch-9: #94c95a;
+  --ch-10: #f06b80;
+  --st-pl: #f5b73b;
+  --st-sfp: #6f96f2;
+  --st-cf: #34c79e;
+  --st-ratio: #a88bf0;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.25);
   color-scheme: dark;
+}
+
+/* Chapter colour for text: deeper than the fill so it stays readable on the page. */
+* {
+  --ch-text: color-mix(in oklab, var(--ch) 78%, var(--ink));
+  --ch-soft: color-mix(in oklab, var(--ch) 12%, transparent);
 }
 
 *,
@@ -1356,6 +1417,145 @@ main.page {
   display: none;
 }
 
+/* ---------- the books panel ---------- */
+
+.side-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid var(--rule);
+}
+.side-tabs button {
+  border: none;
+  background: none;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 13px;
+  color: var(--ink-2);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+.side-tabs button.on {
+  color: var(--ink);
+  border-bottom-color: var(--accent);
+  font-weight: 600;
+}
+.spread-right {
+  display: inline-flex;
+  gap: 14px;
+  align-items: baseline;
+}
+.books-toggle {
+  display: none;
+  font-size: 13px;
+}
+.books h2 {
+  font-size: 20px;
+  margin-bottom: 4px;
+}
+.books-events {
+  margin: 12px 0 6px;
+  font-size: 13px;
+}
+.books-events summary {
+  cursor: pointer;
+  font-weight: 600;
+  padding: 6px 0;
+}
+.books-events ol {
+  margin: 6px 0 0;
+  padding-left: 22px;
+}
+.books-events li {
+  margin: 4px 0;
+}
+.books-event {
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.books-event:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.books-why {
+  margin: 4px 0 8px;
+  padding: 6px 8px;
+  background: var(--accent-soft);
+  border-radius: var(--radius);
+  color: var(--ink-2);
+}
+.books-block {
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  background: var(--paper-raised);
+  padding: 10px 12px;
+  margin-top: 12px;
+  font-size: 12.5px;
+}
+.books-block.locked {
+  background: none;
+  border-style: dashed;
+}
+.books-block-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  font-family: var(--serif);
+  font-size: 15px;
+  margin-bottom: 6px;
+}
+.books-tag {
+  font-family: var(--sans);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.books-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 2px 0;
+  font-variant-numeric: tabular-nums;
+}
+.books-row .num {
+  white-space: nowrap;
+}
+.books-block.locked .books-row {
+  color: var(--ink-3);
+}
+.books-row.sub {
+  font-weight: 600;
+  border-top: 1px solid var(--rule);
+}
+.books-row.total {
+  font-weight: 700;
+  border-top: 1px solid var(--ink-3);
+}
+.books-where {
+  margin: 6px 0 0;
+  color: var(--ink-3);
+  font-size: 12px;
+}
+.books-link {
+  margin: 8px 0 0;
+  padding-left: 4px;
+  font-size: 12.5px;
+  color: var(--good);
+}
+@media (max-width: 1023px) {
+  .books-toggle {
+    display: inline;
+  }
+}
+
 /* ---------- responsive ---------- */
 
 @media (max-width: 1023px) {
@@ -1473,20 +1673,6 @@ main.page {
    Game layer: cast, bubbles, scenes, level path, points
    ===================================================================== */
 
-:root {
-  --gold: #b07d22;
-  --gold-soft: rgba(176, 125, 34, 0.12);
-}
-:root[data-theme='dark'] {
-  --gold: #e0b45c;
-  --gold-soft: rgba(224, 180, 92, 0.12);
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) {
-    --gold: #e0b45c;
-    --gold-soft: rgba(224, 180, 92, 0.12);
-  }
-}
 
 .btn {
   border-radius: 999px;
@@ -3629,3 +3815,294 @@ textarea.written:focus {
 .test-out { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-top: 14px; padding: 12px 14px; border: 1px dashed var(--rule-strong); border-radius: 14px; font-size: 14.5px; }
 .test-out .btn { flex: none; }
 @media (max-width: 720px) { .test-out { flex-direction: column; align-items: stretch; } }
+
+/* =====================================================================
+   Jewel layer: chapter colours, statement colours, rewards.
+   Each chapter sets --ch; each statement wears its own colour everywhere.
+   ===================================================================== */
+
+:root {
+  --on-ch: #ffffff;
+}
+:root[data-theme='dark'] {
+  --on-ch: #13111c;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --on-ch: #13111c;
+  }
+}
+
+/* A ribbon of every chapter colour along the top of the app. */
+.topbar {
+  border-top: 4px solid transparent;
+  border-image: linear-gradient(90deg, var(--ch-1), var(--ch-2), var(--ch-3), var(--ch-4), var(--ch-5), var(--ch-6), var(--ch-7), var(--ch-8), var(--ch-9), var(--ch-10)) 1;
+}
+
+/* ---- map: chapter cards ---- */
+.chapter.open {
+  border-color: color-mix(in oklab, var(--ch) 55%, var(--rule));
+  box-shadow: 6px 6px 0 var(--ch-soft), var(--shadow);
+  background: linear-gradient(135deg, color-mix(in oklab, var(--ch) 9%, var(--paper-raised)) 0%, var(--paper-raised) 55%);
+}
+.chapter-n {
+  color: var(--ch-text);
+}
+.chapter.open .eyebrow {
+  color: var(--ch-text);
+}
+.chapter.locked {
+  border-style: dashed;
+  border-color: color-mix(in oklab, var(--ch) 35%, var(--rule));
+}
+.chapter.locked .chapter-n {
+  color: color-mix(in oklab, var(--ch) 50%, var(--ink-3));
+}
+.path::before,
+.path-line {
+  background: repeating-linear-gradient(90deg, color-mix(in oklab, var(--ch) 50%, var(--rule-strong)) 0 8px, transparent 8px 14px);
+}
+.node-dot {
+  border-color: color-mix(in oklab, var(--ch) 45%, var(--rule-strong));
+}
+.node.done .node-dot {
+  background: var(--ch);
+  border-color: var(--ch);
+  color: var(--on-ch);
+}
+.node.current .node-dot {
+  background: var(--paper-raised);
+  border: 3px solid var(--ch);
+  color: var(--ch-text);
+  box-shadow: 0 0 0 6px var(--ch-soft);
+}
+@keyframes pulse {
+  50% {
+    box-shadow: 0 0 0 12px transparent;
+  }
+}
+.node.boss .node-dot {
+  background: color-mix(in oklab, var(--ch) 14%, var(--paper));
+}
+.node.boss.done .node-dot {
+  background: var(--ch);
+}
+
+/* ---- episodes: header, progress ---- */
+.session-head {
+  border-left: 4px solid var(--ch);
+  padding-left: 16px;
+}
+.session-head .eyebrow {
+  color: var(--ch-text);
+}
+.progress-dots span {
+  height: 5px;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--ch) 14%, var(--rule));
+}
+.progress-dots span.done {
+  background: var(--ch);
+}
+.progress-dots span.here {
+  background: color-mix(in oklab, var(--ch) 55%, var(--paper));
+}
+.play-side .side-tabs button.on {
+  border-bottom-color: var(--ch);
+}
+
+/* ---- statements: one colour each ---- */
+.statement,
+.books-block {
+  --st: var(--rule-strong);
+}
+.st-pl {
+  --st: var(--st-pl);
+}
+.st-sfp {
+  --st: var(--st-sfp);
+}
+.st-cf {
+  --st: var(--st-cf);
+}
+.st-ratio {
+  --st: var(--st-ratio);
+}
+.statement {
+  border-top: 5px solid var(--st);
+  box-shadow: var(--shadow);
+}
+.statement-head {
+  color: color-mix(in oklab, var(--st) 70%, var(--ink));
+}
+.st-line.subtotal {
+  border-top-color: color-mix(in oklab, var(--st) 60%, var(--ink-3));
+}
+.books-block {
+  border-left: 4px solid var(--st);
+}
+.books-block .books-block-head {
+  color: color-mix(in oklab, var(--st) 70%, var(--ink));
+}
+.books-block.locked {
+  border-left-style: dashed;
+}
+.books-block .books-row.total {
+  border-top-color: var(--st);
+}
+.books-link {
+  color: var(--ink-2);
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, color-mix(in oklab, var(--from) 16%, transparent), color-mix(in oklab, var(--to) 16%, transparent));
+  border-left: 3px solid var(--from);
+}
+.books-link.from-pl {
+  --from: var(--st-pl);
+}
+.books-link.from-sfp {
+  --from: var(--st-sfp);
+}
+.books-link.from-cf {
+  --from: var(--st-cf);
+}
+.books-link.from-ratio {
+  --from: var(--st-ratio);
+}
+.books-link.to-pl {
+  --to: var(--st-pl);
+}
+.books-link.to-sfp {
+  --to: var(--st-sfp);
+}
+.books-link.to-cf {
+  --to: var(--st-cf);
+}
+.books-link.to-ratio {
+  --to: var(--st-ratio);
+}
+
+/* ---- money in and out ---- */
+.delta.up {
+  color: var(--good);
+}
+.delta.down {
+  color: var(--bad);
+}
+
+/* ---- buttons and badges ---- */
+.btn:not(.ghost):not(:disabled):hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+  box-shadow: 0 6px 16px var(--accent-soft);
+}
+.eyebrow {
+  letter-spacing: 0.12em;
+}
+
+/* ---- rewards ---- */
+.stars .on {
+  color: var(--gold);
+  text-shadow: 0 0 12px var(--gold-soft);
+}
+.finale {
+  position: relative;
+}
+.confetti {
+  position: absolute;
+  inset: -20px 0 auto 0;
+  height: 0;
+  pointer-events: none;
+  overflow: visible;
+}
+.confetti i {
+  position: absolute;
+  top: 0;
+  width: 8px;
+  height: 12px;
+  border-radius: 2px;
+  opacity: 0;
+  animation: confetti 1.6s cubic-bezier(0.2, 0.6, 0.3, 1) forwards;
+}
+@keyframes confetti {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) rotate(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--dx), var(--dy)) rotate(var(--rot));
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .confetti {
+    display: none;
+  }
+  .node.current .node-dot {
+    animation: none;
+  }
+}
+
+/* ---- louder: badges, tiles, primary buttons ---- */
+.chapter-n {
+  display: inline-grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  min-width: 56px;
+  border-radius: 16px;
+  background: var(--ch);
+  color: var(--on-ch);
+  font-size: 30px;
+  box-shadow: 0 6px 16px var(--ch-soft);
+}
+.chapter.locked .chapter-n {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  border-radius: 12px;
+  font-size: 22px;
+  background: color-mix(in oklab, var(--ch) 18%, var(--paper));
+  color: var(--ch-text);
+  box-shadow: none;
+}
+.chapter.open {
+  background: linear-gradient(135deg, color-mix(in oklab, var(--ch) 14%, var(--paper-raised)) 0%, var(--paper-raised) 60%);
+}
+.today-card {
+  --tile: var(--accent);
+  border-top: 4px solid var(--tile);
+  box-shadow: var(--shadow);
+}
+.today-card:nth-child(1) {
+  --tile: var(--gold);
+}
+.today-card:nth-child(2) {
+  --tile: var(--accent);
+}
+.today-card:nth-child(3) {
+  --tile: var(--ch-2);
+}
+.today-card .today-tag {
+  color: color-mix(in oklab, var(--tile) 80%, var(--ink));
+}
+.today-card:not(:disabled):hover {
+  background: color-mix(in oklab, var(--tile) 8%, var(--paper-raised));
+}
+.btn:not(.ghost):not(:disabled) {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+.btn:not(.ghost):not(:disabled):hover {
+  background: color-mix(in oklab, var(--accent) 82%, var(--ink));
+  border-color: color-mix(in oklab, var(--accent) 82%, var(--ink));
+}
+.hero h1 {
+  display: inline-block;
+  background: linear-gradient(90deg, var(--ink) 0%, var(--ink) 40%, var(--accent) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}

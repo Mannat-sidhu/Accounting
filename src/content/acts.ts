@@ -1,11 +1,21 @@
 // The ten chapters. I–III are refreshers (topics up to the mid-term); IV, cash flow, is built up from first principles.
 // Player-facing text never mentions lectures or textbooks; `topic` is for maintainers only.
 import type { Act } from '../engine/types';
-import { FROST } from './act-4-problems';
-import { HOUSE, OVERLOAD } from './act-5-problems';
+import { mulberry32 } from '../engine/rng';
+import { ratioValue } from './act-5-problems';
+import { YEAR_BASE, finOf, varyYear, yearParams } from './books';
 import { KNOTTED } from './act-6-problems';
 import { COATS } from './act-8-problems';
 import { SCARVES } from './act-8-problems';
+
+// Atelier Noor's year: Chapters II to V each add a layer to these same books.
+const Y = yearParams(YEAR_BASE);
+const FIN = finOf(YEAR_BASE);
+// The following year, for the Chapter IV and V boss levels: same business, fresh numbers, compared with this year.
+const NEXT = varyYear(mulberry32(2027));
+const NY = yearParams(NEXT);
+const NFIN = finOf(NEXT);
+const r1 = (n: number) => Math.round(n * 10) / 10;
 
 const ACT_1: Act = {
   number: 1,
@@ -73,7 +83,7 @@ const ACT_2: Act = {
         },
         { kind: 'lesson', concepts: ['equation', 'asset-test'] },
         { kind: 'problem', problem: 'asset-test' },
-        { kind: 'problem', problem: 'net-assets' },
+        { kind: 'problem', problem: 'net-assets', params: Y.netAssets },
         { kind: 'lesson', concepts: ['dual-effect'] },
         { kind: 'problem', problem: 'dual-effect' },
         { kind: 'spotcheck' },
@@ -81,13 +91,19 @@ const ACT_2: Act = {
     },
     {
       id: 'a2s2',
-      title: 'Closing the books',
-      blurb: 'Current or not, and the whole balance sheet.',
+      title: 'Where the year starts',
+      blurb: 'Current or not, and Atelier Noor’s opening balance sheet: the first page of the year we’ll follow.',
       parts: [
-        { kind: 'story', beats: [{ who: 'margaux', text: 'Now we put it all in order. Long term, short term, and who has a claim on what.' }] },
+        {
+          kind: 'story',
+          beats: [
+            { who: 'margaux', text: 'Now we put it all in order. Long term, short term, and who has a claim on what.' },
+            { who: 'margaux', text: 'And from here on we follow one year of our own business. The balance sheet you build today is where it starts. The income statement, the cash flow and the ratios all grow out of it.' },
+          ],
+        },
         { kind: 'lesson', concepts: ['current-noncurrent', 'sfp-layout'] },
         { kind: 'problem', problem: 'current-sort' },
-        { kind: 'problem', problem: 'sfp-build' },
+        { kind: 'problem', problem: 'books-sfp-open' },
         { kind: 'lesson', concepts: ['conventions'] },
         { kind: 'problem', problem: 'conventions-sort' },
         { kind: 'spotcheck' },
@@ -115,15 +131,17 @@ const ACT_3: Act = {
           scene: 'The studio · bonus season',
           beats: [
             { who: 'theo', mood: 'happy', text: 'Record year! My bonus is on profit, so let’s count it.' },
-            { who: 'margaux', text: 'Let’s count it properly.' },
+            { who: 'margaux', text: 'Let’s count it properly. Same year we opened in Chapter II. First the two awkward lines, then the whole statement.' },
           ],
         },
         { kind: 'lesson', concepts: ['is-layout', 'cost-of-sales'] },
-        { kind: 'problem', problem: 'is-build' },
-        { kind: 'problem', problem: 'cos' },
+        { kind: 'problem', problem: 'cos', params: Y.cos },
         { kind: 'lesson', concepts: ['recognition', 'accruals-prepayments'] },
         { kind: 'problem', problem: 'recognition-sort' },
-        { kind: 'problem', problem: 'accrual-prepayment' },
+        { kind: 'problem', problem: 'accrual-prepayment', params: Y.accrual },
+        { kind: 'problem', problem: 'books-is' },
+        { kind: 'story', beats: [{ who: 'margaux', text: 'Real company check-in. Same move, real published accounts.' }] },
+        { kind: 'problem', problem: 'real-bm-margin' },
         { kind: 'spotcheck' },
       ],
     },
@@ -140,7 +158,7 @@ const ACT_3: Act = {
           ],
         },
         { kind: 'lesson', concepts: ['depreciation', 'inventory-methods'] },
-        { kind: 'problem', problem: 'straight-line' },
+        { kind: 'problem', problem: 'straight-line', params: Y.straightLine },
         { kind: 'problem', problem: 'inventory-cost' },
         { kind: 'lesson', concepts: ['provisions', 'discretion'] },
         { kind: 'problem', problem: 'discretion-sort' },
@@ -152,21 +170,25 @@ const ACT_3: Act = {
     },
     {
       id: 'a3s3',
-      title: 'The new boutique',
-      blurb: 'A year’s transactions in a list: income statement, cash, and balance sheet.',
+      title: 'Where the year ends',
+      blurb: 'Follow each event of the year into the balance sheet, where profit joins it. Then a single month.',
       parts: [
         {
           kind: 'story',
-          scene: 'The new boutique · 31 December',
+          scene: 'The studio · 31 December',
           beats: [
-            { who: 'niamh', text: 'A new boutique has traded for a year. All I have is a list of what happened. I need the income statement and the balance sheet.' },
-            { who: 'margaux', text: 'Same facts, three views: profit, cash, and what we own and owe. One at a time.' },
+            { who: 'niamh', text: 'Year end. I have the opening balance sheet you built, the income statement, and the list of what happened. I need the closing balance sheet, and it has to agree with both.' },
+            { who: 'margaux', text: 'Same facts, three views: profit, cash, and what we own and owe. Every event lands in at least two places.' },
           ],
         },
         { kind: 'lesson', concepts: ['transactions'] },
-        { kind: 'problem', problem: 'trans-is' },
-        { kind: 'problem', problem: 'trans-cash' },
-        { kind: 'problem', problem: 'trans-bs' },
+        { kind: 'problem', problem: 'books-links' },
+        { kind: 'problem', problem: 'books-sfp' },
+        {
+          kind: 'story',
+          beats: [{ who: 'margaux', text: 'A year is just twelve months stacked up. Here’s one of them: same business, smaller numbers, one new trap.' }],
+        },
+        { kind: 'problem', problem: 'month-pl' },
         { kind: 'spotcheck' },
       ],
     },
@@ -192,13 +214,13 @@ const ACT_4: Act = {
           beats: [
             { who: 'aoife', text: 'Your profit is up. Your bank balance is down. Explain.' },
             { who: 'theo', mood: 'worried', text: 'That… can’t happen. Can it?' },
-            { who: 'margaux', text: 'It happens all the time. We’re going to take this slowly, from the very beginning.' },
+            { who: 'margaux', text: 'It happens all the time. It happened to us this year: the profit you found in Chapter III, and a bank balance that fell. We’re going to take this slowly, from the very beginning.' },
           ],
         },
         { kind: 'lesson', concepts: ['cash-v-profit'] },
         { kind: 'problem', problem: 'cash-or-profit' },
         { kind: 'lesson', concepts: ['cash-jar'] },
-        { kind: 'problem', problem: 'cash-collected' },
+        { kind: 'problem', problem: 'cash-collected', params: Y.cashCollected },
         { kind: 'lesson', concepts: ['cash-equivalents'] },
         { kind: 'problem', problem: 'cce-change' },
         {
@@ -216,10 +238,13 @@ const ACT_4: Act = {
         { kind: 'story', beats: [{ who: 'margaux', text: 'Every cash flow goes in one of three buckets. Let’s sort a year’s bank statements.' }] },
         { kind: 'lesson', concepts: ['ofi'] },
         { kind: 'problem', problem: 'ofi-sort' },
+        { kind: 'problem', problem: 'month-cash' },
         { kind: 'lesson', concepts: ['interest-dividends'] },
         { kind: 'problem', problem: 'interest-choice' },
         { kind: 'lesson', concepts: ['free-cash-flow'] },
-        { kind: 'problem', problem: 'fcf' },
+        { kind: 'problem', problem: 'fcf', params: Y.fcf },
+        { kind: 'story', beats: [{ who: 'margaux', text: 'Real company check-in. Same formula, a company that can afford its dividend.' }] },
+        { kind: 'problem', problem: 'real-gw-cash' },
         { kind: 'spotcheck' },
       ],
     },
@@ -231,7 +256,9 @@ const ACT_4: Act = {
         { kind: 'story', beats: [{ who: 'margaux', text: 'Now we walk from operating profit to operating cash. Undo the non-cash, then follow the working capital.' }] },
         { kind: 'lesson', concepts: ['indirect-method', 'working-capital'] },
         { kind: 'problem', problem: 'wc-signs' },
-        { kind: 'problem', problem: 'cfo-indirect' },
+        { kind: 'problem', problem: 'cfo-indirect', params: Y.cfoIndirect },
+        { kind: 'story', beats: [{ who: 'margaux', text: 'Real company check-in. A real company that made a profit and still ran short of cash.' }] },
+        { kind: 'problem', problem: 'real-tonies-cash' },
         { kind: 'spotcheck' },
       ],
     },
@@ -248,31 +275,30 @@ const ACT_4: Act = {
           ],
         },
         { kind: 'lesson', concepts: ['dep-charge', 'capex'] },
-        { kind: 'problem', problem: 'dep-jar' },
-        { kind: 'problem', problem: 'additions-jar' },
+        { kind: 'problem', problem: 'dep-jar', params: Y.depJar },
+        { kind: 'problem', problem: 'additions-jar', params: Y.additionsJar },
         { kind: 'lesson', concepts: ['disposal', 'liability-jars'] },
-        { kind: 'problem', problem: 'disposal' },
-        { kind: 'problem', problem: 'liability-paid', tier: 'unguided' },
+        { kind: 'problem', problem: 'disposal', params: Y.disposal },
+        { kind: 'problem', problem: 'liability-paid', params: Y.taxPaid, tier: 'unguided' },
         { kind: 'lesson', concepts: ['scf-layout'] },
-        { kind: 'problem', problem: 'scf-full' },
+        { kind: 'problem', problem: 'books-scf' },
         { kind: 'spotcheck' },
       ],
     },
   ],
   boss: {
-    title: 'The dessert maker',
+    title: 'The following year',
     intro: [
-      { who: 'idris', mood: 'happy', text: 'A frozen-dessert maker wants me to invest. Their brochure says “cash-rich”.' },
-      { who: 'margaux', text: 'Then we check. Every working, then the whole statement. Figures in thousands. No help from me.' },
+      { who: 'idris', mood: 'happy', text: 'Another year done! I’m telling my friends we’re “cash-rich” now.' },
+      { who: 'margaux', text: 'Then we check. Same business, a whole new year of numbers. Every working, then the whole statement. No help from me.' },
     ],
     problems: [
-      { problem: 'cce-change', params: { oc: 120, oe: 100, oo: 20, cc: 95, ce: 500, co: 600, lock: 0, profit: 1200, receivables: 1450, unit: '€’000', depositNote: 'opened on 16 November that matured on 15 February' } },
-      { problem: 'dep-jar', params: { open: FROST.adOpen, close: FROST.adClose, sold: FROST.soldAd, claim: FROST.adClose - FROST.adOpen, unit: '€’000' } },
-      { problem: 'disposal', params: { cost: FROST.soldCost, ad: FROST.soldAd, given: 'proceeds', amount: FROST.proceeds, item: 'freezer line', unit: '€’000' } },
-      { problem: 'additions-jar', params: { open: FROST.costOpen, close: FROST.costClose, soldCost: FROST.soldCost, unit: '€’000' } },
-      { problem: 'liability-paid', params: { what: 'tax', start: FROST.taxOpen, charge: FROST.taxCharge, end: FROST.taxClose, unit: '€’000' } },
-      { problem: 'liability-paid', params: { what: 'dividends', start: FROST.divOpen, charge: FROST.divDeclared, end: FROST.divClose, unit: '€’000' } },
-      { problem: 'scf-frost' },
+      { problem: 'dep-jar', params: NY.depJar },
+      { problem: 'disposal', params: NY.disposal },
+      { problem: 'additions-jar', params: NY.additionsJar },
+      { problem: 'liability-paid', params: NY.taxPaid },
+      { problem: 'cfo-indirect', params: NY.cfoIndirect },
+      { problem: 'books-scf', params: NEXT },
     ],
     paper: [
       { ref: 'Frozen Ltd', note: 'The same numbers as this boss. Write the full statement on paper with every working, W1 to W13.' },
@@ -300,19 +326,20 @@ const ACT_5: Act = {
           scene: 'Merchant’s Quay Bank · loan review',
           beats: [
             { who: 'aoife', text: 'New loan? Fine. Ratios first. I have a checklist.' },
-            { who: 'margaux', text: 'She always has a checklist.' },
+            { who: 'margaux', text: 'She always has a checklist. Good news: we already have every number. They come straight from the income statement and balance sheets you built for this year.' },
           ],
         },
         { kind: 'lesson', concepts: ['ratio-families', 'profitability'] },
         { kind: 'problem', problem: 'ratio-sort' },
-        { kind: 'problem', problem: 'ratio-profit' },
-        { kind: 'problem', problem: 'ratio-profit', params: { ratio: 'roe', d: HOUSE, last: 10 }, tier: 'unguided' },
+        { kind: 'problem', problem: 'ratio-profit', params: { ratio: 'roce', d: FIN, last: 13.8 } },
+        { kind: 'story', beats: [{ who: 'margaux', text: 'Real company check-in. The same ratio on a famous real business.' }] },
+        { kind: 'problem', problem: 'real-gw-roce' },
+        { kind: 'problem', problem: 'ratio-profit', params: { ratio: 'roe', d: FIN, last: 15.5 }, tier: 'unguided' },
         { kind: 'lesson', concepts: ['liquidity', 'gearing-cover'] },
-        { kind: 'problem', problem: 'ratio-liquidity', tier: 'unguided' },
-        { kind: 'problem', problem: 'ratio-gearing', tier: 'unguided' },
+        { kind: 'problem', problem: 'ratio-liquidity', params: { ratio: 'quick', d: FIN, last: 1.4 }, tier: 'unguided' },
+        { kind: 'problem', problem: 'ratio-gearing', params: { ratio: 'int-cover', d: FIN, last: 4.2 }, tier: 'unguided' },
         { kind: 'lesson', concepts: ['investor-ratios', 'ratio-limits'] },
-        { kind: 'problem', problem: 'ratio-investor', tier: 'unguided' },
-        { kind: 'problem', problem: 'trans-ratios', tier: 'unguided' },
+        { kind: 'problem', problem: 'ratio-investor', params: { ratio: 'pe', d: FIN, last: 7 }, tier: 'unguided' },
         { kind: 'problem', problem: 'ratio-context-brief' },
         { kind: 'spotcheck' },
       ],
@@ -330,7 +357,9 @@ const ACT_5: Act = {
           ],
         },
         { kind: 'lesson', concepts: ['efficiency'] },
-        { kind: 'problem', problem: 'ratio-efficiency', tier: 'unguided' },
+        { kind: 'problem', problem: 'ratio-efficiency', params: { ratio: 'debtor-days', d: FIN, last: 55 }, tier: 'unguided' },
+        { kind: 'story', beats: [{ who: 'margaux', text: 'Real company check-in. How fast does a real discount chain sell its stock?' }] },
+        { kind: 'problem', problem: 'real-bm-invdays' },
         { kind: 'problem', problem: 'ratio-reverse', tier: 'unguided' },
         { kind: 'problem', problem: 'cash-cycle' },
         { kind: 'lesson', concepts: ['liquidity-management'] },
@@ -346,18 +375,17 @@ const ACT_5: Act = {
     },
   ],
   boss: {
-    title: 'Overloaded',
+    title: 'A year on',
     intro: [
-      { who: 'aoife', text: 'A supplier of yours, Overload, wants credit from us. Here are its accounts.' },
-      { who: 'margaux', text: 'Ratios, then the two proposals for its debtors. On your own.' },
+      { who: 'aoife', text: 'The following year’s accounts are in. Before I renew anything: the ratios against last year, then what you’ll do about the debtors.' },
+      { who: 'margaux', text: 'Same business, new numbers, and this year’s figures are the comparison. On your own.' },
     ],
     problems: [
-      { problem: 'ratio-efficiency', params: { ratio: 'inv-days', d: OVERLOAD, last: 90 } },
-      { problem: 'ratio-efficiency', params: { ratio: 'debtor-days', d: OVERLOAD, last: 80 } },
-      { problem: 'ratio-gearing', params: { ratio: 'int-cover', d: OVERLOAD, last: 5 } },
+      { problem: 'ratio-efficiency', params: { ratio: 'inv-days', d: NFIN, last: r1(ratioValue('inv-days', FIN)) } },
+      { problem: 'ratio-efficiency', params: { ratio: 'debtor-days', d: NFIN, last: r1(ratioValue('debtor-days', FIN)) } },
+      { problem: 'ratio-gearing', params: { ratio: 'int-cover', d: NFIN, last: r1(ratioValue('int-cover', FIN)) } },
       { problem: 'debtor-info' },
-      { problem: 'credit-control', params: { sales: OVERLOAD.creditSales, daysNow: null, receivables: 500000, to: 30, by: null, funds: 6, cost: 50000, name: 'Overload' } },
-      { problem: 'invoice-discounting', params: { receivables: 500000, sales: 0, days: 0, eligible: 80, advance: 75, facility: 2, fee: 25000, funds: 6, limit: null } },
+      { problem: 'credit-control', params: creditControlFor(NEXT.sales, NEXT.closeRec) },
     ],
     paper: [
       { ref: 'Overload Ltd (past paper Q2)', note: 'All three parts, written out: the ratios, three information sources, both proposals.' },
@@ -366,6 +394,13 @@ const ACT_5: Act = {
     ],
   },
 };
+
+/** A credit-control offer for a year's debtors: get them down to 30 days, for a fee a bit under the saving. */
+function creditControlFor(sales: number, receivables: number) {
+  const saving = (receivables - (sales * 30) / 365) * 0.08;
+  const cost = Math.max(500, Math.round((saving * 0.7) / 100) * 100);
+  return { sales, daysNow: null, receivables, to: 30, by: null, funds: 8, cost, name: 'the boutique accounts' };
+}
 
 const ACT_6: Act = {
   number: 6,

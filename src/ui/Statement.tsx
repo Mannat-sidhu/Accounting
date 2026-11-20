@@ -18,6 +18,7 @@ import {
 } from '../engine/grading';
 import { mulberry32, shuffle } from '../engine/rng';
 import { TIER_LABEL } from '../engine/mastery';
+import { statementKind } from './theme';
 import type { StatementInstance, StatementProblem, Tier } from '../engine/types';
 import { Bubble, Chat } from './Chat';
 import { DataTable } from './Diagrams';
@@ -62,7 +63,7 @@ export function StatementView({
   const sums = sectionSums(inst, placements);
   const subShown = (id: string) => (subtotals === 'show' ? acc(sums[id]) : subtotals === 'hide' ? '?' : subtotals[id] == null ? '?' : acc(subtotals[id]!));
   return (
-    <div className="statement">
+    <div className={`statement${statementKind(inst.heading) ? ` st-${statementKind(inst.heading)}` : ''}`}>
       <div className="statement-head">{inst.heading}</div>
       {inst.sections.map((s) => {
         const lines = inst.items.filter((it) => placements[it.id]?.section === s.id);

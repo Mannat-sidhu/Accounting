@@ -2,6 +2,9 @@ import { ACTS, CONCEPTS, METHODS, PROBLEMS, problemsFor } from '../src/content';
 import { expectedValues, markSubtotals, markTotals, markWorksheet, sectionSums, truePlacements } from '../src/engine/grading';
 import { mulberry32 } from '../src/engine/rng';
 import { ONESALE } from '../src/content/act-8-problems';
+import { OVERLOAD } from '../src/content/act-5-problems';
+import { FROST } from '../src/content/act-4-problems';
+import { YEAR_BASE, yearParams } from '../src/content/books';
 import type { CalcProblem, GridProblem, ProblemInstance, StatementInstance, StatementProblem } from '../src/engine/types';
 
 const BANNED = /lecture|lecturer|textbook|exam script|McLaney|Atrill|BMA|Brightspace/i;
@@ -140,12 +143,9 @@ const answerOf = (id: string, params?: unknown) => {
 };
 
 describe('story numbers match the worked answers', () => {
-  it('Overload boss: proposals (29,000) and (13,000)', () => {
-    const boss = ACTS[4].boss!;
-    const cc = boss.problems.find((x) => x.problem === 'credit-control')!;
-    const id = boss.problems.find((x) => x.problem === 'invoice-discounting')!;
-    expect(answerOf('credit-control', cc.params)).toBeCloseTo(-29000, 0);
-    expect(answerOf('invoice-discounting', id.params)).toBeCloseTo(-13000, 0);
+  it('Overload (past paper): proposals (29,000) and (13,000)', () => {
+    expect(answerOf('credit-control', { sales: OVERLOAD.creditSales, daysNow: null, receivables: 500000, to: 30, by: null, funds: 6, cost: 50000, name: 'Overload' })).toBeCloseTo(-29000, 0);
+    expect(answerOf('invoice-discounting', { receivables: 500000, sales: 0, days: 0, eligible: 80, advance: 75, facility: 2, fee: 25000, funds: 6, limit: null })).toBeCloseTo(-13000, 0);
   });
   it('Apex 1 base: +5,068', () => expect(answerOf('credit-control')).toBeCloseTo(5068.49, 0));
   it('Slowpay LM4 base: (6,360)', () => expect(answerOf('invoice-discounting')).toBeCloseTo(-6360, 1));
@@ -168,9 +168,32 @@ describe('story numbers match the worked answers', () => {
     expect(answerOf('var-materials', { kind: 'mat-qty', d: ONESALE })).toBeCloseTo(24000, 0);
     expect(answerOf('var-materials', { kind: 'mat-rate', d: ONESALE })).toBeCloseTo(-20000, 0);
   });
-  it('Frozen boss workings: (205), 900, 120, 1,400, 830, 600', () => {
-    const v = ACTS[3].boss!.problems.slice(0, 6).map((x) => answerOf(x.problem, x.params));
-    expect(v).toEqual([-205, 900, 120, 1400, 830, 600].map((n) => expect.closeTo(n, 6)));
+  it('Frozen (worked answer): 900, 120, 1,400, 830, 600', () => {
+    const v = [
+      answerOf('dep-jar', { open: FROST.adOpen, close: FROST.adClose, sold: FROST.soldAd, claim: FROST.adClose - FROST.adOpen, unit: '€’000' }),
+      answerOf('disposal', { cost: FROST.soldCost, ad: FROST.soldAd, given: 'proceeds', amount: FROST.proceeds, item: 'freezer line', unit: '€’000' }),
+      answerOf('additions-jar', { open: FROST.costOpen, close: FROST.costClose, soldCost: FROST.soldCost, unit: '€’000' }),
+      answerOf('liability-paid', { what: 'tax', start: FROST.taxOpen, charge: FROST.taxCharge, end: FROST.taxClose, unit: '€’000' }),
+      answerOf('liability-paid', { what: 'dividends', start: FROST.divOpen, charge: FROST.divDeclared, end: FROST.divClose, unit: '€’000' }),
+    ];
+    expect(v).toEqual([900, 120, 1400, 830, 600].map((n) => expect.closeTo(n, 6)));
+    expect(answerOf('cce-change', { oc: 120, oe: 100, oo: 20, cc: 95, ce: 500, co: 600, lock: 0, profit: 1200, receivables: 1450, unit: '€’000', depositNote: 'x' })).toBeCloseTo(-205, 6);
+  });
+  it('Atelier Noor’s year: every chapter’s answer agrees with the same books', () => {
+    const Y = yearParams(YEAR_BASE);
+    expect(answerOf('net-assets', Y.netAssets)).toBeCloseTo(93000, 6);
+    expect(answerOf('cos', Y.cos)).toBeCloseTo(150000, 6);
+    expect(answerOf('cash-collected', Y.cashCollected)).toBeCloseTo(242000, 6);
+    expect(answerOf('cfo-indirect', Y.cfoIndirect)).toBeCloseTo(12400, 6);
+    expect(answerOf('fcf', Y.fcf)).toBeCloseTo(-17600, 6);
+    expect(answerOf('dep-jar', Y.depJar)).toBeCloseTo(14000, 6);
+    expect(answerOf('additions-jar', Y.additionsJar)).toBeCloseTo(30000, 6);
+    expect(answerOf('disposal', Y.disposal)).toBeCloseTo(1500, 6);
+    expect(answerOf('liability-paid', Y.taxPaid)).toBeCloseTo(9000, 6);
+    const scf = (PROBLEMS['books-scf'] as StatementProblem).build(YEAR_BASE);
+    expect(sectionSums(scf, truePlacements(scf)).op).toBeCloseTo(12400, 6);
+    const is = (PROBLEMS['books-is'] as StatementProblem).build(YEAR_BASE);
+    expect(is.totals.find((t) => t.key === 'pat')!.calc(sectionSums(is, truePlacements(is)))).toBeCloseTo(15000, 6);
   });
   it('Cottage machine: BEP 428.6 and 1,000 baskets for €4,000', () => {
     expect(answerOf('cvp-machine')).toBeCloseTo(428.57, 1);

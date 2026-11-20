@@ -19,6 +19,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -26,6 +28,13 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build
+      # The classic version (before the linked books), kept at /v1/ so it's always one click away.
+      - name: Build the classic version into dist/v1
+        run: |
+          git worktree add ../classic v1
+          cd ../classic
+          npm ci
+          npx vite build --outDir "$GITHUB_WORKSPACE/dist/v1" --emptyOutDir
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist

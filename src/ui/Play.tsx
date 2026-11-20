@@ -1,15 +1,18 @@
 // Session player, boss round and free practice.
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { ACTS, CONCEPTS, PRACTISABLE, PROBLEMS, findSession, hasParams, problemsFor } from '../content';
 import { eurSigned } from '../engine/format';
 import { TIER_BLURB, TIER_LABEL, maxTier, pickSpotCheck, stageOf, tierFor } from '../engine/mastery';
 import { mulberry32, newSeed, pickOne } from '../engine/rng';
 import type { ConceptId, Problem, Stage, Tier } from '../engine/types';
 import { Bubble, Scene } from './Chat';
-import { Ledger, LessonCard, STAGE_LABEL, talkBeats } from './Overlays';
+import { BOOK_REVEALS, BooksPanel } from './BooksPanel';
+import { Ledger, LessonCard, Overlay, STAGE_LABEL, talkBeats } from './Overlays';
 import { RoundRunner, type RoundResult } from './Rounds';
 import { Stars, starsFor } from './Stars';
 import { bumpStreak, useGame } from './store';
+import { chStyle } from './theme';
 
 // ---------------------------------------------------------------- lessons
 
@@ -216,6 +219,46 @@ function SpotCheck({ exclude, onDone }: { exclude: ConceptId[]; onDone: (score: 
 
 // ---------------------------------------------------------------- session
 
+/** A burst of jewel-coloured confetti for a three-star finish. Hidden when the device asks for reduced motion. */
+function Confetti() {
+  const bits = useMemo(() => {
+    const rng = mulberry32(7);
+    return Array.from({ length: 28 }, (_, i) => ({
+      left: `${10 + rng() * 80}%`,
+      color: `var(--ch-${(i % 10) + 1})`,
+      dx: `${Math.round((rng() - 0.5) * 260)}px`,
+      dy: `${Math.round(120 + rng() * 220)}px`,
+      rot: `${Math.round((rng() - 0.5) * 720)}deg`,
+      delay: `${(rng() * 0.35).toFixed(2)}s`,
+    }));
+  }, []);
+  return (
+    <div className="confetti" aria-hidden>
+      {bits.map((b, i) => (
+        <i key={i} style={{ left: b.left, background: b.color, animationDelay: b.delay, ['--dx' as string]: b.dx, ['--dy' as string]: b.dy, ['--rot' as string]: b.rot }} />
+      ))}
+    </div>
+  );
+}
+
+/** The side column: Atelier Noor's books, or the ledger of ideas. */
+function Side({ prefer }: { prefer: 'books' | 'ledger' }) {
+  const [tab, setTab] = useState(prefer);
+  return (
+    <>
+      <div className="side-tabs" role="tablist" aria-label="Side panel">
+        <button type="button" role="tab" aria-selected={tab === 'books'} className={tab === 'books' ? 'on' : ''} onClick={() => setTab('books')}>
+          The books
+        </button>
+        <button type="button" role="tab" aria-selected={tab === 'ledger'} className={tab === 'ledger' ? 'on' : ''} onClick={() => setTab('ledger')}>
+          The ledger
+        </button>
+      </div>
+      {tab === 'books' ? <BooksPanel /> : <Ledger />}
+    </>
+  );
+}
+
 export function SessionPlayer({ sessionId }: { sessionId: string }) {
   const { save, setSave, go, back, applyOutcome, recordWork } = useGame();
   const found = findSession(sessionId)!;
@@ -228,6 +271,8 @@ export function SessionPlayer({ sessionId }: { sessionId: string }) {
   const [startValue] = useState(resume?.startValue ?? save.value);
   const [seed] = useState(newSeed);
   const [promos, setPromos] = useState<{ concept: ConceptId; to: Stage }[]>([]);
+  const [booksOpen, setBooksOpen] = useState(false);
+  const linked = act.number >= 2 && act.number <= 5;
   const taught = useMemo(() => session.parts.flatMap((p) => (p.kind === 'lesson' ? p.concepts : [])), [session]);
   const total = session.parts.length;
   const finished = part >= total;
@@ -273,12 +318,29 @@ export function SessionPlayer({ sessionId }: { sessionId: string }) {
           Chapter {act.numeral} · Episode {index + 1}
           {replay && ' · replay, just for practice'}
         </div>
-        {!finished && (
-          <span className="muted num-tab" style={{ fontSize: 13 }}>
-            ✦ {score} points
-          </span>
-        )}
+        <span className="spread-right">
+          {linked && (
+            <button type="button" className="link books-toggle" onClick={() => setBooksOpen(true)}>
+              Open the books
+            </button>
+          )}
+          {!finished && (
+            <span className="muted num-tab" style={{ fontSize: 13 }}>
+              ✦ {score} points
+            </span>
+          )}
+        </span>
       </div>
+      {booksOpen &&
+        createPortal(
+          <Overlay label="The books" onClose={() => setBooksOpen(false)}>
+            <button type="button" className="link" style={{ float: 'right' }} onClick={() => setBooksOpen(false)}>
+              Close
+            </button>
+            <BooksPanel />
+          </Overlay>,
+          document.body,
+        )}
       <h1>{session.title}</h1>
       <div className="progress-dots" aria-hidden>
         {session.parts.map((_, i) => (
@@ -293,10 +355,11 @@ export function SessionPlayer({ sessionId }: { sessionId: string }) {
     const delta = save.value - startValue;
     const stars = starsFor(score, max);
     return (
-      <div className="play">
+      <div className="play" style={chStyle(act.number)}>
         <div className="play-main">
           {head}
           <section className="finale">
+            {stars === 3 && <Confetti />}
             <div className="eyebrow">Episode cleared</div>
             <div className="finale-stars">
               <Stars n={stars} />
@@ -350,7 +413,7 @@ export function SessionPlayer({ sessionId }: { sessionId: string }) {
           </section>
         </div>
         <aside className="play-side">
-          <Ledger />
+          <Side prefer={linked ? 'books' : 'ledger'} />
         </aside>
       </div>
     );
@@ -382,6 +445,8 @@ export function SessionPlayer({ sessionId }: { sessionId: string }) {
           onDone={(r: RoundResult) => {
             const o = r.calc?.instance.outcomes[r.calc.decision] ?? r.outcome;
             if (!replay && o) applyOutcome(o);
+            const part = linked ? BOOK_REVEALS[problem.id] : undefined;
+            if (part) setSave((s) => ({ ...s, books: [...new Set([...(s.books ?? []), part])] }));
             for (const [c, clean] of Object.entries(r.clean)) notePromo(c, recordWork(c, clean, false));
             forward({ score: r.score, max: r.max });
           }}
@@ -391,7 +456,7 @@ export function SessionPlayer({ sessionId }: { sessionId: string }) {
   }
 
   return (
-    <div className="play">
+    <div className="play" style={chStyle(act.number)}>
       <div className="play-main">
         {head}
         {(p.kind === 'problem' || p.kind === 'spotcheck') && !done[part] && (
@@ -401,8 +466,8 @@ export function SessionPlayer({ sessionId }: { sessionId: string }) {
         )}
         {body}
       </div>
-      <aside className="play-side" aria-label="Ledger">
-        <Ledger />
+      <aside className="play-side" aria-label="Side panel">
+        <Side prefer={linked ? 'books' : 'ledger'} />
       </aside>
     </div>
   );
@@ -466,7 +531,7 @@ export function BossPlayer({ actNumber }: { actNumber: number }) {
 
   if (i < 0)
     return (
-      <div className="play-main narrow">
+      <div className="play-main narrow" style={chStyle(act.number)}>
         {head}
         <Scene
           beats={[...boss.intro, { who: 'narrator', text: `Exam conditions: ${allowance} minutes for ${boss.problems.length} parts. No tips, no cheat cards, marks only at the end of each part. The clock starts when you do.` }]}
@@ -485,7 +550,7 @@ export function BossPlayer({ actNumber }: { actNumber: number }) {
     const score = runs.reduce((s, x) => s + x.r.score, 0);
     const max = runs.reduce((s, x) => s + x.r.max, 0);
     return (
-      <div className="play-main narrow">
+      <div className="play-main narrow" style={chStyle(act.number)}>
         {head}
         <section className="finale">
           <div className="eyebrow">{stopped ? 'Pens down: time’s up' : 'Boss defeated'}</div>
@@ -540,7 +605,7 @@ export function BossPlayer({ actNumber }: { actNumber: number }) {
   const spec = boss.problems[i];
   const problem = PROBLEMS[spec.problem];
   return (
-    <div className="play-main narrow">
+    <div className="play-main narrow" style={chStyle(act.number)}>
       {head}
       <RoundRunner
         key={i}
@@ -623,7 +688,7 @@ export function PracticePlayer({ concept }: { concept: ConceptId }) {
   };
 
   return (
-    <div className="play-main narrow">
+    <div className="play-main narrow" style={chStyle(CONCEPTS[concept].act)}>
       <header className="session-head">
         <div className="eyebrow">Practice · {STAGE_LABEL[stage]}</div>
         <h1>{c.name}</h1>

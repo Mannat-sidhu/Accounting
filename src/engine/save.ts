@@ -69,6 +69,8 @@ export interface SaveData {
   sessionsPlayed: number;
   /** Mock exam attempts, newest first. */
   exams: ExamRecord[];
+  /** Parts of Atelier Noor's books built so far (problem ids), which fill in the books panel. */
+  books?: string[];
 }
 
 export interface SaveStore {
@@ -77,12 +79,15 @@ export interface SaveStore {
   clear(): void;
 }
 
-const KEY = 'atelier-noor-accounts/save/v1';
+/** The linked-books version saves here. */
+const KEY = 'atelier-noor-accounts/save/v2';
+/** The classic version (still playable at ./v1/) saves here. It's read once to carry progress across, never written. */
+const CLASSIC_KEY = 'atelier-noor-accounts/save/v1';
 
 export class LocalSaveStore implements SaveStore {
   load() {
     try {
-      const raw = localStorage.getItem(KEY);
+      const raw = localStorage.getItem(KEY) ?? localStorage.getItem(CLASSIC_KEY);
       return raw ? migrate(JSON.parse(raw)) : null;
     } catch {
       return null;

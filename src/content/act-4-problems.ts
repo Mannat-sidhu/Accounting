@@ -409,6 +409,10 @@ interface CfoP {
   rec: [number, number];
   pay: [number, number];
   refit: number;
+  /** Optional, for a full year: gain on disposal (a loss negative), accruals start and end, interest and tax paid. */
+  gain?: number;
+  accr?: [number, number];
+  paidOut?: { interest: number; tax: number };
 }
 
 export const cfoIndirect = defineCalc<CfoP>({
@@ -432,14 +436,17 @@ export const cfoIndirect = defineCalc<CfoP>({
       refit: pickInt(rng, 30000, 70000, 5000),
     };
   },
-  build: ({ op, dep, inv, rec, pay, refit }) => {
-    const wc = A.workingCapitalAdjustments({ inventory: inv, receivables: rec, payables: pay });
-    const cfo = A.cashFromOperations({ operatingProfit: op, depreciation: dep, gainOnDisposal: 0, provisionIncrease: 0, wc: { inventory: inv, receivables: rec, payables: pay } });
+  build: ({ op, dep, inv, rec, pay, refit, gain = 0, accr, paidOut }) => {
+    const wc = A.workingCapitalAdjustments({ inventory: inv, receivables: rec, payables: pay, accruals: accr });
+    const out = paidOut ? paidOut.interest + paidOut.tax : 0;
+    const cfo = A.cashFromOperations({ operatingProfit: op, depreciation: dep, gainOnDisposal: gain, provisionIncrease: 0, wc: { inventory: inv, receivables: rec, payables: pay, accruals: accr } }) - out;
     const sgn = (n: number) => (n >= 0 ? `+${w0(n)}` : `(${w0(-n)})`);
+    const full = gain !== 0 || !!accr || !!paidOut;
     return {
       prompt: [
         { who: 'theo', mood: 'happy', text: `Operating profit ${eur(op)}! So we can afford the ${eur(refit)} showroom refit this month. Right?` },
         { who: 'margaux', text: `Depreciation in that profit was ${eur(dep)}. Over the year inventory went from ${eur(inv[0])} to ${eur(inv[1])}, receivables from ${eur(rec[0])} to ${eur(rec[1])}, and payables from ${eur(pay[0])} to ${eur(pay[1])}.` },
+        ...(full ? [{ who: 'margaux' as const, text: `It’s our own year, so the rest is in too: ${gain ? `a ${eur(Math.abs(gain))} ${gain >= 0 ? 'gain' : 'loss'} on the old equipment, ` : ''}${accr ? `accruals from ${eur(accr[0])} to ${eur(accr[1])}, ` : ''}${paidOut ? `and ${eur(paidOut.interest)} interest and ${eur(paidOut.tax)} tax paid` : ''}.` }] : []),
       ],
       ask: 'What was the cash from operating activities?',
       data: table('From the accounts', ['', 'Start', 'End'], [
@@ -448,6 +455,9 @@ export const cfoIndirect = defineCalc<CfoP>({
         ['Inventory', w0(inv[0]), w0(inv[1])],
         ['Trade receivables', w0(rec[0]), w0(rec[1])],
         ['Trade payables', w0(pay[0]), w0(pay[1])],
+        ...(gain ? [[gain >= 0 ? 'Gain on disposal' : 'Loss on disposal', '', w0(Math.abs(gain))]] : []),
+        ...(accr ? [['Accruals', w0(accr[0]), w0(accr[1])]] : []),
+        ...(paidOut ? [['Interest paid', '', w0(paidOut.interest)], ['Tax paid', '', w0(paidOut.tax)]] : []),
       ]),
       spot: {
         question: 'Which lines need adjusting to get from operating profit to operating cash?',
@@ -456,10 +466,13 @@ export const cfoIndirect = defineCalc<CfoP>({
           { id: 'inv', label: 'Change in inventory' },
           { id: 'rec', label: 'Change in receivables' },
           { id: 'pay', label: 'Change in payables' },
+          ...(gain ? [{ id: 'gain', label: 'Gain or loss on disposal' }] : []),
+          ...(accr ? [{ id: 'accr', label: 'Change in accruals' }] : []),
+          ...(paidOut ? [{ id: 'paid', label: 'Interest and tax paid' }] : []),
           { id: 'sales', label: 'Sales revenue' },
           { id: 'loan', label: 'The bank loan' },
         ],
-        correct: ['dep', 'inv', 'rec', 'pay'],
+        correct: ['dep', 'inv', 'rec', 'pay', ...(gain ? ['gain'] : []), ...(accr ? ['accr'] : []), ...(paidOut ? ['paid'] : [])],
         explain: 'Undo the non-cash expense (depreciation), then adjust for each working capital movement. Sales are already inside profit; the loan is financing.',
       },
       formula: {
@@ -474,9 +487,12 @@ export const cfoIndirect = defineCalc<CfoP>({
         { key: 'I', symbol: '\\Delta\\text{Inv}', label: 'Inventory adjustment (negative if it soaks up cash)', unit: 'eur', expected: wc.inventory, explain: `Inventory ${inv[1] >= inv[0] ? 'rose' : 'fell'} by ${w0(Math.abs(inv[1] - inv[0]))}: ${sgn(wc.inventory)}.` },
         { key: 'R', symbol: '\\Delta\\text{Rec}', label: 'Receivables adjustment', unit: 'eur', expected: wc.receivables, explain: `Receivables ${rec[1] >= rec[0] ? 'rose' : 'fell'} by ${w0(Math.abs(rec[1] - rec[0]))}: ${sgn(wc.receivables)}.` },
         { key: 'Y', symbol: '\\Delta\\text{Pay}', label: 'Payables adjustment', unit: 'eur', expected: wc.payables, explain: `Payables ${pay[1] >= pay[0] ? 'rose' : 'fell'} by ${w0(Math.abs(pay[1] - pay[0]))}: ${sgn(wc.payables)}.` },
+        ...(gain ? [{ key: 'G', symbol: '\\text{Gain}', label: gain >= 0 ? 'Gain on disposal (deduct)' : 'Loss on disposal (add back)', unit: 'eur' as const, expected: -gain, explain: `${gain >= 0 ? 'Deduct the gain' : 'Add back the loss'}: ${sgn(-gain)}. The sale price goes in investing.` }] : []),
+        ...(accr ? [{ key: 'A', symbol: '\\Delta\\text{Accr}', label: 'Accruals adjustment', unit: 'eur' as const, expected: wc.accruals, explain: `Accruals ${accr[1] >= accr[0] ? 'rose' : 'fell'} by ${w0(Math.abs(accr[1] - accr[0]))}: ${sgn(wc.accruals)}.` }] : []),
+        ...(paidOut ? [{ key: 'N', symbol: '\\text{Int+Tax}', label: 'Interest and tax paid (negative)', unit: 'eur' as const, expected: -out, explain: `${w0(paidOut.interest)} + ${w0(paidOut.tax)} paid: ${sgn(-out)}.` }] : []),
       ],
-      solve: (v) => v.P + v.D + v.I + v.R + v.Y,
-      answer: { label: 'Cash from operating activities', unit: 'eur', explain: `${w0(op)} + ${w0(dep)} ${sgn(wc.inventory)} ${sgn(wc.receivables)} ${sgn(wc.payables)} = ${w0(cfo)}.` },
+      solve: (v) => v.P + v.D + v.I + v.R + v.Y + (v.G ?? 0) + (v.A ?? 0) + (v.N ?? 0),
+      answer: { label: full ? 'Net cash from operating activities' : 'Cash from operating activities', unit: 'eur', explain: `${w0(op)} + ${w0(dep)} ${sgn(wc.inventory)} ${sgn(wc.receivables)} ${sgn(wc.payables)}${gain ? ` ${sgn(-gain)}` : ''}${accr ? ` ${sgn(wc.accruals)}` : ''}${paidOut ? ` ${sgn(-out)}` : ''} = ${w0(cfo)}.` },
       decision: {
         question: `Can the ${eur(refit)} refit come out of this year’s operating cash?`,
         options: [
@@ -498,7 +514,10 @@ export const cfoIndirect = defineCalc<CfoP>({
         `(Increase)/decrease in inventory ${w0(wc.inventory)}`,
         `(Increase)/decrease in receivables ${w0(wc.receivables)}`,
         `Increase/(decrease) in payables ${w0(wc.payables)}`,
-        `Cash from operating activities €${w0(cfo)}`,
+        ...(gain ? [`${gain >= 0 ? 'Less gain' : 'Add loss'} on disposal ${w0(-gain)}`] : []),
+        ...(accr ? [`Increase/(decrease) in accruals ${w0(wc.accruals)}`] : []),
+        ...(paidOut ? [`Interest paid (${w0(paidOut.interest)}), tax paid (${w0(paidOut.tax)})`] : []),
+        `${full ? 'Net cash' : 'Cash'} from operating activities €${w0(cfo)}`,
       ],
       hints: {
         spot: 'Anything in profit that wasn’t cash, and every working capital line that moved.',

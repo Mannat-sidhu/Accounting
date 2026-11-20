@@ -23,6 +23,8 @@ import { BANK_PROBLEMS } from './bank-problems';
 import { WRITTEN_PROBLEMS } from './written-problems';
 import { CROSS_PROBLEMS } from './cross-problems';
 import { WHICH_TOOL_PROBLEMS } from './which-tool';
+import { BOOKS_PROBLEMS } from './books-problems';
+import { REAL_PROBLEMS } from './real-companies';
 import { ACTS as RAW_ACTS } from './acts';
 export { CHARACTERS, FORMULA_SHEET, METHODS } from './methods';
 
@@ -31,7 +33,7 @@ export const CONCEPTS: Record<ConceptId, Concept> = Object.fromEntries(
 );
 
 export const PROBLEMS: Record<string, Problem> = Object.fromEntries(
-  [ACT1_PROBLEMS, ACT2_PROBLEMS, ACT3_PROBLEMS, ACT4_PROBLEMS, ACT5_PROBLEMS, ACT6_PROBLEMS, ACT7_PROBLEMS, ACT8_PROBLEMS, ACT9_PROBLEMS, BANK_PROBLEMS, WRITTEN_PROBLEMS, CROSS_PROBLEMS, WHICH_TOOL_PROBLEMS].flat().map((p) => [p.id, p]),
+  [ACT1_PROBLEMS, ACT2_PROBLEMS, ACT3_PROBLEMS, ACT4_PROBLEMS, ACT5_PROBLEMS, ACT6_PROBLEMS, ACT7_PROBLEMS, ACT8_PROBLEMS, ACT9_PROBLEMS, BANK_PROBLEMS, WRITTEN_PROBLEMS, CROSS_PROBLEMS, WHICH_TOOL_PROBLEMS, BOOKS_PROBLEMS, REAL_PROBLEMS].flat().map((p) => [p.id, p]),
 );
 
 export const isCalc = (p: Problem): p is CalcProblem => p.kind === 'calc';
